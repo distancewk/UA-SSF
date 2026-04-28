@@ -107,7 +107,9 @@ for i in range(seed_round):
     # setup_seed(seed+i)
     current_seed = seed+i
     setup_seed(current_seed)
-    print(f"Current seed: {current_seed}")
+    print(f"\n{'='*60}")
+    print(f"Seed {current_seed} ({i+1}/{seed_round}) | dataset={dataset} | mode={mode}")
+    print(f"{'='*60}")
 
     if dataset == 'nsl':
         # Transform the data
@@ -121,8 +123,8 @@ for i in range(seed_round):
     # Convert to torch tensors
     x_train, y_train = torch.FloatTensor(x_train), torch.LongTensor(y_train)
     x_test, y_test = torch.FloatTensor(x_test), torch.LongTensor(y_test)
-    print('shape of x_train ', x_train.shape)
-    print('shape of x_test is ', x_test.shape)
+    if i == 0:
+        print(f"[Config] train={x_train.shape[0]}, test={x_test.shape[0]}, memory={math.floor(x_train.shape[0] * (1-percent))}, input_dim={input_dim}")
 
     torch.cuda.empty_cache()
 
@@ -133,7 +135,6 @@ for i in range(seed_round):
     
     # 按照基础数据的规模，计算并分配持续学习缓存池（Memory Buffer）的容量上限
     memory = x_train.shape[0] * (1-percent)
-    print('size of memory is ', memory)
     memory = math.floor(memory)
 
     train_ds = TensorDataset(online_x_train, online_y_train)
@@ -163,9 +164,8 @@ for i in range(seed_round):
 
     model.train()
     # 初始离线训练阶段（使用当前已有的历史数据进行基础模型训练）
+    print(f"[Offline] Training {epochs} epochs...", end="", flush=True)
     for epoch in range(epochs):
-        if epoch % 50 == 0 or epoch == 0:
-            print('seed = ', (seed+i), ', first round: epoch = ', epoch)
         for j, data in enumerate(train_loader, 0):
             inputs, labels = data
             inputs = inputs.to(device)
@@ -192,6 +192,7 @@ for i in range(seed_round):
             loss.backward()
             optimizer.step()
 
+    print(" done")
     teacher_model.load_state_dict(model.state_dict())  # Initialize teacher model
 
     x_train = x_train.to(device)
@@ -207,7 +208,7 @@ for i in range(seed_round):
     y_test = y_test[permutation]
     # Concatenating x_test and x_test_left_epoch
     x_test_left_epoch = torch.cat((x_test_left_epoch, x_test), dim=0)
-    print('shape of x_test_left_epoch is ', x_test_left_epoch.shape)
+
     # Concatenating y_test and y_test_left_epoch
     y_test_left_epoch = torch.cat((y_test_left_epoch, y_test), dim=0)
 
@@ -215,10 +216,10 @@ for i in range(seed_round):
         normal_recon_temp = torch.mean(F.normalize(model(online_x_train[(online_y_train == 0).squeeze()])[1], p=2, dim=1), dim=0)
         y_pred_before_online = evaluate(normal_recon_temp, online_x_train, online_y_train, x_test_left_epoch, 0, model)
         y_pred_before_online = y_pred_before_online.cpu().numpy()
-        print('--------------------------- performance_before_continual_training -----------------------------------')
+        print('[Before CL]')
         performance_before = score_detail(y_test_left_epoch[-x_test.shape[0]:].numpy(), y_pred_before_online[-x_test.shape[0]:].astype("int32"))
     else:
-        print('--------------------------- performance_before_contunual_training -----------------------------------')
+        print('[Before CL]')
         test_ds = TensorDataset(x_test, y_test)  # Replace with your test data
         test_loader = DataLoader(dataset=test_ds, batch_size=bs, shuffle=False)
         performance_before = evaluate_classifier(model, test_loader, device)
@@ -235,7 +236,6 @@ for i in range(seed_round):
     labeled_indices = []
 
     while start_idx < len(x_test_left_epoch):
-        print('seed = ', (seed+i), ', i = ', count)
         count += 1
         
         end_idx = min(start_idx + sample_interval, len(x_test_left_epoch))
@@ -314,7 +314,6 @@ for i in range(seed_round):
 
         # 判断并应用样本更新与遗忘策略
         if drift:
-            print("Drift detected, update the model...")
             # 检测到概念漂移 (Drift)：当前窗口内新到达的样本分布与历史分布存在统计显著差异
             # 策略：调用激进的更新机制，不仅淘汰无代表性的旧样本，如果缓冲池有余量，
             # 还会强行为额外的新样本打上伪标签（Pseudo-label）放入缓冲池，尽快适应新的概念分布。
@@ -349,10 +348,15 @@ for i in range(seed_round):
         #   - severity→1 (强漂移): adaptive_lwf→0 → 几乎无蒸馏，快速适应
         # 当 adaptive_lwf < 1e-6 时完全跳过蒸馏计算，与原始 SSF drift=True 行为一致。
         # ==============================
-        print(f"Training with adaptive_lwf={adaptive_lwf:.4f}, epochs={adaptive_epoch_1}, severity={severity:.4f}")
+        # 窗口摘要日志：一行输出关键信息
+        if mode == 'ua-ssf':
+            drift_str = f"DRIFT(sev={severity:.2f})" if drift else f"stable(p={p_val:.4f})"
+            print(f"[W{count-1:02d}] {drift_str} | lwf={adaptive_lwf:.2f} ep={adaptive_epoch_1}", end="")
+        else:
+            drift_str = "DRIFT" if drift else "stable"
+            print(f"[W{count-1:02d}] {drift_str} | lwf={adaptive_lwf:.2f} ep={adaptive_epoch_1}", end="")
+        
         for epoch in range(adaptive_epoch_1):
-            if epoch % 50 == 0:
-                print('epoch = ', epoch)
             for j, data in enumerate(train_loader, 0):
                 inputs, labels, new_sample_mask = data
                 inputs = inputs.to(device)
@@ -408,6 +412,9 @@ for i in range(seed_round):
             predict_label = evaluate_classifier(model, test_loader, device, get_predict=True)
         
         y_train_detection = torch.cat((y_train_detection.to(device), torch.tensor(predict_label).to(device)))
+        
+        # 结束窗口日志行（换行）
+        print(f" | buf={len(x_train_this_epoch)}")
 
 ################### test the performance after online training ###################
 
@@ -428,7 +435,7 @@ for i in range(seed_round):
     y_test_left_pseudo = y_train_detection[-test_size:][test_mask].to(device)
     y_test_left_true = y_test_left_epoch[-test_size:][test_mask].to(device)
     
-    print('--------------------------- performance_after_continual_training -----------------------------------')
+    print('[After CL]')
     performance_test = score_detail(y_test_left_true.cpu().numpy(), y_test_left_pseudo.cpu().numpy())
 
 

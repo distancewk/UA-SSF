@@ -303,8 +303,7 @@ def select_and_update_representative_samples(x_train_this_epoch, y_train_this_ep
     representative_old = x_train_this_epoch[M_c_bin.bool()]
     representative_new = x_test_this_epoch[M_t_bin.bool()]
 
-    print(f"Selected representative old samples: {representative_old.shape}")
-    print(f"Selected representative new samples: {representative_new.shape}")
+    print(f"  Samples: old={representative_old.shape[0]}, new={representative_new.shape[0]}", end="")
 
     old_indices = torch.arange(len(x_train_this_epoch), device=device)
     representative_old_indices = old_indices[M_c_bin.bool()]
@@ -316,7 +315,7 @@ def select_and_update_representative_samples(x_train_this_epoch, y_train_this_ep
     num_to_remove = num_labeled_sample
 
     if len(non_representative_old_indices) < num_to_remove:
-        print(f"Not enough non-representative old samples to remove ({len(non_representative_old_indices)}). Removing additional representative samples.")
+        print(f" | WARN: not enough non-rep old to remove ({len(non_representative_old_indices)})", end="")
         additional_remove_needed = num_to_remove - len(non_representative_old_indices)
         
         # Remove all non-representative samples first
@@ -340,7 +339,7 @@ def select_and_update_representative_samples(x_train_this_epoch, y_train_this_ep
     new_sample_mask = torch.zeros_like(y_train_this_epoch, dtype=torch.float32).to(device)
 
     if representative_new.shape[0] < num_labeled_sample:
-        print(f"Not enough representative new samples selected ({representative_new.shape[0]}). Selecting additional random samples.")
+        print(f" | new补充={additional_samples_needed}", end="")
         additional_samples_needed = num_labeled_sample - representative_new.shape[0]
 
         selected_indices = set(torch.arange(len(x_test_this_epoch))[M_t_bin.bool().cpu().numpy()])
@@ -379,8 +378,7 @@ def select_and_update_representative_samples_when_drift(
     representative_old = x_train_this_epoch[M_c_bin.bool()]
     representative_new = x_test_this_epoch[M_t_bin.bool()]
 
-    print(f"Selected representative old samples: {representative_old.shape}")
-    print(f"Selected representative new samples: {representative_new.shape}")
+    print(f"  Samples: old={representative_old.shape[0]}, new={representative_new.shape[0]}", end="")
 
     old_indices = torch.arange(len(x_train_this_epoch), device=device)
     representative_old_indices = old_indices[M_c_bin.bool()]
@@ -395,7 +393,7 @@ def select_and_update_representative_samples_when_drift(
     remove_indices = non_representative_old_indices
 
     if len(non_representative_old_indices) < num_to_remove:
-        print(f"Not enough non-representative old samples to remove ({len(non_representative_old_indices)}). Removing additional representative samples.")
+        print(f" | WARN: not enough non-rep old ({len(non_representative_old_indices)})", end="")
         additional_remove_needed = num_to_remove - len(non_representative_old_indices)
         
         # Then remove the remaining number from the representative samples with the lowest scores
@@ -414,7 +412,7 @@ def select_and_update_representative_samples_when_drift(
     new_sample_mask = torch.zeros_like(y_train_this_epoch, dtype=torch.float32).to(device)
 
     if representative_new.shape[0] < num_labeled_sample:
-        print(f"Not enough representative samples selected ({representative_new.shape[0]}). Selecting additional random samples.")
+        print(f" | new补充={additional_samples_needed}", end="")
         additional_samples_needed = num_labeled_sample - representative_new.shape[0]
 
         selected_indices = set(torch.arange(len(x_test_this_epoch))[M_t_bin.bool().cpu().numpy()])
@@ -437,7 +435,7 @@ def select_and_update_representative_samples_when_drift(
 
     if len(x_train_this_epoch) < buffer_memory_size:
         additional_samples_needed = buffer_memory_size - len(x_train_this_epoch)
-        print(f"Buffer memory has extra space for {additional_samples_needed} samples. Adding new samples with pseudo labels.")
+        print(f" | pseudo_fill={additional_samples_needed}", end="")
 
         if representative_new.shape[0] > num_labeled_sample:
             remaining_new_samples = representative_new[torch.argsort(torch.tensor(scores_new), descending=True)[num_labeled_sample:]]
@@ -644,19 +642,15 @@ class InfoNCELoss(nn.Module):
         return loss
     
 def score_detail(y_test,y_test_pred,if_print=True):
-    # Confusion matrix
-    print("Confusion matrix")
-    print(confusion_matrix(y_test, y_test_pred))
-    # Accuracy 
-    print('Accuracy ',accuracy_score(y_test, y_test_pred))
-    # Precision 
-    print('Precision ',precision_score(y_test, y_test_pred))
-    # Recall
-    print('Recall ',recall_score(y_test, y_test_pred))
-    # F1 score
-    print('F1 score ',f1_score(y_test,y_test_pred))
-
-    return accuracy_score(y_test, y_test_pred), precision_score(y_test, y_test_pred), recall_score(y_test, y_test_pred), f1_score(y_test,y_test_pred)
+    acc = accuracy_score(y_test, y_test_pred)
+    pre = precision_score(y_test, y_test_pred)
+    rec = recall_score(y_test, y_test_pred)
+    f1 = f1_score(y_test, y_test_pred)
+    if if_print:
+        cm = confusion_matrix(y_test, y_test_pred)
+        print(f"  Acc={acc:.4f}  Pre={pre:.4f}  Rec={rec:.4f}  F1={f1:.4f}")
+        print(f"  Confusion: TP={cm[1][1]} FP={cm[0][1]} FN={cm[1][0]} TN={cm[0][0]}")
+    return acc, pre, rec, f1
 
 def setup_seed(seed):
     torch.manual_seed(seed)
@@ -666,6 +660,7 @@ def setup_seed(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     print(f"Random seed set to: {seed}")
+    # seed 信息合并到 ssf.py 的 seed header 中，此处保留静默设置
 
 # Define a small epsilon to avoid log(0)
 EPSILON = 1e-10
@@ -807,10 +802,8 @@ def detect_drift(new_data, control_data, window_size, drift_threshold):
         ks_statistic, p_value = ks_2samp(control_data.cpu().numpy(), window_data.cpu().numpy())
         # ks_statistic, p_value = ks_2samp(control_data, window_data)
         if p_value < drift_threshold:
-            print(f"!!!!!!!!!!!!!!!!!!!!! Drift detected in window {i // window_size + 1} (p-value: {p_value})")
             return True
-        else:
-            print(f"No drift detected in window {i // window_size + 1} (p-value: {p_value})")
+        # SSF mode: no-drift case is silent (logged by ssf.py)
     return False
 
 # ==============================
@@ -830,14 +823,10 @@ def detect_drift_with_severity(new_data, control_data, window_size, drift_thresh
         ks_statistic, p_value = ks_2samp(control_data.cpu().numpy(),
                                           window_data.cpu().numpy())
         if p_value >= drift_threshold:
-            severity = 0.0
-            print(f"No drift in window {i // window_size + 1} "
-                  f"(p-value: {p_value:.6f}, severity: {severity:.4f})")
+            return 0.0, p_value, False
         else:
             # p_value 越小，漂移越严重；-log10 映射到 [0, 1] 区间
             severity = min(1.0, -np.log10(p_value + 1e-10) / 10.0)
-            print(f"!!! Drift in window {i // window_size + 1} "
-                  f"(p-value: {p_value:.6f}, severity: {severity:.4f})")
             return severity, p_value, True
     return 0.0, 1.0, False
 

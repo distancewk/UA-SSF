@@ -1,1480 +1,312 @@
 # 1.nsl
-(ssf) jackson@omnisky:~/wkcodenew/SSF-Strategic-Selection-and-Forgetting-main$ python ssf.py --dataset nsl --epochs 200 --epoch_1 20 --sample_interval 5000 --num_labeled_sample 50 --opt_old_lr 100 --opt_new_lr 8 --new_sample_weight 3 --cuda 0
+(ssf) jackson@omnisky:~/wkcodenew/SSF-Strategic-Selection-and-Forgetting-main$ python ssf.py --mode ua-ssf --dataset nsl --epochs 200 --epoch_1 20 --sample_interval 5000 --num_labeled_sample 50 --opt_old_lr 100 --opt_new_lr 8 --new_sample_weight 3 --cuda 0
 Random seed set to: 5011
-Current seed: 5011
-shape of x_train  torch.Size([125973, 121])
-shape of x_test is  torch.Size([22544, 121])
-size of memory is  25194.599999999995
-seed =  5011 , first round: epoch =  0
-seed =  5011 , first round: epoch =  50
-seed =  5011 , first round: epoch =  100
-seed =  5011 , first round: epoch =  150
-shape of x_test_left_epoch is  torch.Size([123323, 121])
---------------------------- performance_before_continual_training -----------------------------------
-Confusion matrix
-[[ 8221  1490]
- [ 1232 11601]]
-Accuracy  0.8792583392476934
-Precision  0.8861813459628752
-Recall  0.9039975064287384
-F1 score  0.8950007714858818
-seed =  5011 , i =  0
-No drift in window 1 (p-value: 0.972955, severity: 0.0000)
-Selected representative old samples: torch.Size([118, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5011 , i =  1
-No drift in window 1 (p-value: 0.537443, severity: 0.0000)
-Selected representative old samples: torch.Size([88, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5011 , i =  2
-No drift in window 1 (p-value: 0.613190, severity: 0.0000)
-Selected representative old samples: torch.Size([401, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5011 , i =  3
-No drift in window 1 (p-value: 0.576828, severity: 0.0000)
-Selected representative old samples: torch.Size([70, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5011 , i =  4
-No drift in window 1 (p-value: 0.564541, severity: 0.0000)
-Selected representative old samples: torch.Size([229, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5011 , i =  5
-!!! Drift in window 1 (p-value: 0.017286, severity: 0.1762)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([168, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 24976 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.4119, epochs=13, severity=0.1762
-epoch =  0
-seed =  5011 , i =  6
-No drift in window 1 (p-value: 0.068323, severity: 0.0000)
-Selected representative old samples: torch.Size([5182, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5011 , i =  7
-!!! Drift in window 1 (p-value: 0.022539, severity: 0.1647)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([4711, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 20433 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.4176, epochs=13, severity=0.1647
-epoch =  0
-seed =  5011 , i =  8
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([6220, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 18924 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5011 , i =  9
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([6374, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 18770 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5011 , i =  10
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([5384, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 19760 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5011 , i =  11
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([0, 121])
-Selected representative new samples: torch.Size([0, 121])
-Not enough representative samples selected (0). Selecting additional random samples.
-Buffer memory has extra space for 25144 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5011 , i =  12
-No drift in window 1 (p-value: 0.201739, severity: 0.0000)
-Selected representative old samples: torch.Size([2178, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5011 , i =  13
-!!! Drift in window 1 (p-value: 0.012273, severity: 0.1911)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([2165, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 22979 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.4044, epochs=13, severity=0.1911
-epoch =  0
-seed =  5011 , i =  14
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([5490, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 19654 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5011 , i =  15
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([7304, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 17840 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5011 , i =  16
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([6847, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 18297 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5011 , i =  17
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([8227, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 16917 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5011 , i =  18
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([4736, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 20408 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5011 , i =  19
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([5200, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 19944 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5011 , i =  20
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([4626, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 20518 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5011 , i =  21
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([7508, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 17636 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5011 , i =  22
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([0, 121])
-Selected representative new samples: torch.Size([0, 121])
-Not enough representative samples selected (0). Selecting additional random samples.
-Buffer memory has extra space for 25144 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5011 , i =  23
-No drift in window 1 (p-value: 0.564065, severity: 0.0000)
-Selected representative old samples: torch.Size([30, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5011 , i =  24
-Selected representative old samples: torch.Size([67, 121])
-Selected representative new samples: torch.Size([3323, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
---------------------------- performance_after_continual_training -----------------------------------
-Confusion matrix
-[[7884 1784]
- [4348 8301]]
-Accuracy  0.7252318860061836
-Precision  0.8231036192364899
-Recall  0.6562574116530951
-F1 score  0.7302718395354976
+
+============================================================
+Seed 5011 (1/5) | dataset=nsl | mode=ua-ssf
+============================================================
+[Config] train=125973, test=22544, memory=25194, input_dim=121
+[Offline] Training 200 epochs... done
+[Before CL]
+  Acc=0.8793  Pre=0.8862  Rec=0.9040  F1=0.8950
+  Confusion: TP=11601 FP=1490 FN=1232 TN=8221
+  Samples: old=118, new=5000[W00] stable(p=0.9730) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=88, new=5000[W01] stable(p=0.5374) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=401, new=5000[W02] stable(p=0.6132) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=70, new=5000[W03] stable(p=0.5768) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=229, new=5000[W04] stable(p=0.5645) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=168, new=5000 | pseudo_fill=24976[W05] DRIFT(sev=0.18) | lwf=0.41 ep=13 | buf=10168
+  Samples: old=5182, new=5000[W06] stable(p=0.0683) | lwf=0.50 ep=10 | buf=10168
+  Samples: old=4711, new=5000 | pseudo_fill=20433[W07] DRIFT(sev=0.16) | lwf=0.42 ep=13 | buf=14711
+  Samples: old=6220, new=5000 | pseudo_fill=18924[W08] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=16220
+  Samples: old=6374, new=5000 | pseudo_fill=18770[W09] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=16374
+  Samples: old=5384, new=5000 | pseudo_fill=19760[W10] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=15384
+  Samples: old=0, new=0 | new补充=50 | pseudo_fill=25144[W11] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=5050
+  Samples: old=2178, new=5000[W12] stable(p=0.2017) | lwf=0.50 ep=10 | buf=5050
+  Samples: old=2165, new=5000 | pseudo_fill=22979[W13] DRIFT(sev=0.19) | lwf=0.40 ep=13 | buf=12165
+  Samples: old=5490, new=5000 | pseudo_fill=19654[W14] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=15490
+  Samples: old=7304, new=5000 | pseudo_fill=17840[W15] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=17304
+  Samples: old=6847, new=5000 | pseudo_fill=18297[W16] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=16847
+  Samples: old=8227, new=5000 | pseudo_fill=16917[W17] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=18227
+  Samples: old=4736, new=5000 | pseudo_fill=20408[W18] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=14736
+  Samples: old=5200, new=5000 | pseudo_fill=19944[W19] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=15200
+  Samples: old=4626, new=5000 | pseudo_fill=20518[W20] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=14626
+  Samples: old=7508, new=5000 | pseudo_fill=17636[W21] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=17508
+  Samples: old=0, new=0 | new补充=50 | pseudo_fill=25144[W22] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=5050
+  Samples: old=30, new=5000[W23] stable(p=0.5641) | lwf=0.50 ep=10 | buf=5050
+  Samples: old=67, new=3323[W24] stable(p=1.0000) | lwf=0.50 ep=10 | buf=5050
+[After CL]
+  Acc=0.7252  Pre=0.8231  Rec=0.6563  F1=0.7303
+  Confusion: TP=8301 FP=1784 FN=4348 TN=7884
 Random seed set to: 5012
-Current seed: 5012
-shape of x_train  torch.Size([125973, 121])
-shape of x_test is  torch.Size([22544, 121])
-size of memory is  25194.599999999995
-seed =  5012 , first round: epoch =  0
-seed =  5012 , first round: epoch =  50
-seed =  5012 , first round: epoch =  100
-seed =  5012 , first round: epoch =  150
-shape of x_test_left_epoch is  torch.Size([123323, 121])
---------------------------- performance_before_continual_training -----------------------------------
-Confusion matrix
-[[8744  967]
- [2964 9869]]
-Accuracy  0.8256298793470547
-Precision  0.9107604282022886
-Recall  0.7690329618951142
-F1 score  0.8339177827538129
-seed =  5012 , i =  0
-No drift in window 1 (p-value: 0.301692, severity: 0.0000)
-Selected representative old samples: torch.Size([371, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  1
-No drift in window 1 (p-value: 0.711051, severity: 0.0000)
-Selected representative old samples: torch.Size([117, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  2
-No drift in window 1 (p-value: 0.701790, severity: 0.0000)
-Selected representative old samples: torch.Size([96, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  3
-No drift in window 1 (p-value: 0.628848, severity: 0.0000)
-Selected representative old samples: torch.Size([315, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  4
-No drift in window 1 (p-value: 0.551186, severity: 0.0000)
-Selected representative old samples: torch.Size([82, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  5
-No drift in window 1 (p-value: 0.364118, severity: 0.0000)
-Selected representative old samples: torch.Size([281, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  6
-No drift in window 1 (p-value: 0.996561, severity: 0.0000)
-Selected representative old samples: torch.Size([99, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  7
-No drift in window 1 (p-value: 0.401606, severity: 0.0000)
-Selected representative old samples: torch.Size([112, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  8
-No drift in window 1 (p-value: 0.733091, severity: 0.0000)
-Selected representative old samples: torch.Size([265, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  9
-No drift in window 1 (p-value: 0.679008, severity: 0.0000)
-Selected representative old samples: torch.Size([288, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  10
-No drift in window 1 (p-value: 0.131909, severity: 0.0000)
-Selected representative old samples: torch.Size([220, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  11
-No drift in window 1 (p-value: 0.734810, severity: 0.0000)
-Selected representative old samples: torch.Size([125, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  12
-No drift in window 1 (p-value: 0.065679, severity: 0.0000)
-Selected representative old samples: torch.Size([151, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  13
-No drift in window 1 (p-value: 0.590080, severity: 0.0000)
-Selected representative old samples: torch.Size([81, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  14
-No drift in window 1 (p-value: 0.105645, severity: 0.0000)
-Selected representative old samples: torch.Size([88, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  15
-No drift in window 1 (p-value: 0.330765, severity: 0.0000)
-Selected representative old samples: torch.Size([200, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  16
-No drift in window 1 (p-value: 0.402886, severity: 0.0000)
-Selected representative old samples: torch.Size([202, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  17
-No drift in window 1 (p-value: 0.148869, severity: 0.0000)
-Selected representative old samples: torch.Size([93, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5012 , i =  18
-!!! Drift in window 1 (p-value: 0.010850, severity: 0.1965)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([11648, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 13496 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.4018, epochs=13, severity=0.1965
-epoch =  0
-seed =  5012 , i =  19
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([7716, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 17428 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5012 , i =  20
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([7457, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 17687 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5012 , i =  21
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([6269, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 18875 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5012 , i =  22
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([7137, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 18007 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5012 , i =  23
-!!! Drift in window 1 (p-value: 0.000000, severity: 0.6546)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([9315, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 15829 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.1727, epochs=23, severity=0.6546
-epoch =  0
-seed =  5012 , i =  24
-Selected representative old samples: torch.Size([6995, 121])
-Selected representative new samples: torch.Size([3323, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
---------------------------- performance_after_continual_training -----------------------------------
-Confusion matrix
-[[6258 3452]
- [6032 6567]]
-Accuracy  0.5748800932359137
-Precision  0.6554546361912367
-Recall  0.5212318437971267
-F1 score  0.5806879476523124
+
+============================================================
+Seed 5012 (2/5) | dataset=nsl | mode=ua-ssf
+============================================================
+[Offline] Training 200 epochs... done
+[Before CL]
+  Acc=0.8256  Pre=0.9108  Rec=0.7690  F1=0.8339
+  Confusion: TP=9869 FP=967 FN=2964 TN=8744
+  Samples: old=371, new=5000[W00] stable(p=0.3017) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=117, new=5000[W01] stable(p=0.7111) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=96, new=5000[W02] stable(p=0.7018) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=315, new=5000[W03] stable(p=0.6288) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=82, new=5000[W04] stable(p=0.5512) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=281, new=5000[W05] stable(p=0.3641) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=99, new=5000[W06] stable(p=0.9966) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=112, new=5000[W07] stable(p=0.4016) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=265, new=5000[W08] stable(p=0.7331) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=288, new=5000[W09] stable(p=0.6790) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=220, new=5000[W10] stable(p=0.1319) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=125, new=5000[W11] stable(p=0.7348) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=151, new=5000[W12] stable(p=0.0657) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=81, new=5000[W13] stable(p=0.5901) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=88, new=5000[W14] stable(p=0.1056) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=200, new=5000[W15] stable(p=0.3308) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=202, new=5000[W16] stable(p=0.4029) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=93, new=5000[W17] stable(p=0.1489) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=11648, new=5000 | pseudo_fill=13496[W18] DRIFT(sev=0.20) | lwf=0.40 ep=13 | buf=21648
+  Samples: old=7716, new=5000 | pseudo_fill=17428[W19] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=17716
+  Samples: old=7457, new=5000 | pseudo_fill=17687[W20] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=17457
+  Samples: old=6269, new=5000 | pseudo_fill=18875[W21] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=16269
+  Samples: old=7137, new=5000 | pseudo_fill=18007[W22] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=17137
+  Samples: old=9315, new=5000 | pseudo_fill=15829[W23] DRIFT(sev=0.65) | lwf=0.17 ep=23 | buf=19315
+  Samples: old=6995, new=3323[W24] stable(p=1.0000) | lwf=0.50 ep=10 | buf=19315
+[After CL]
+  Acc=0.5749  Pre=0.6555  Rec=0.5212  F1=0.5807
+  Confusion: TP=6567 FP=3452 FN=6032 TN=6258
 Random seed set to: 5013
-Current seed: 5013
-shape of x_train  torch.Size([125973, 121])
-shape of x_test is  torch.Size([22544, 121])
-size of memory is  25194.599999999995
-seed =  5013 , first round: epoch =  0
-seed =  5013 , first round: epoch =  50
-seed =  5013 , first round: epoch =  100
-seed =  5013 , first round: epoch =  150
-shape of x_test_left_epoch is  torch.Size([123323, 121])
---------------------------- performance_before_continual_training -----------------------------------
-Confusion matrix
-[[ 8370  1341]
- [ 1731 11102]]
-Accuracy  0.8637331440738112
-Precision  0.8922285622438318
-Recall  0.8651133795683005
-F1 score  0.8784617819275201
-seed =  5013 , i =  0
-No drift in window 1 (p-value: 0.183196, severity: 0.0000)
-Selected representative old samples: torch.Size([57, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  1
-No drift in window 1 (p-value: 0.490874, severity: 0.0000)
-Selected representative old samples: torch.Size([52, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  2
-No drift in window 1 (p-value: 0.998727, severity: 0.0000)
-Selected representative old samples: torch.Size([124, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  3
-No drift in window 1 (p-value: 0.634081, severity: 0.0000)
-Selected representative old samples: torch.Size([165, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  4
-No drift in window 1 (p-value: 0.809396, severity: 0.0000)
-Selected representative old samples: torch.Size([231, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  5
-No drift in window 1 (p-value: 0.544810, severity: 0.0000)
-Selected representative old samples: torch.Size([185, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  6
-No drift in window 1 (p-value: 0.438510, severity: 0.0000)
-Selected representative old samples: torch.Size([262, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  7
-No drift in window 1 (p-value: 0.995311, severity: 0.0000)
-Selected representative old samples: torch.Size([188, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  8
-No drift in window 1 (p-value: 0.951797, severity: 0.0000)
-Selected representative old samples: torch.Size([220, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  9
-No drift in window 1 (p-value: 0.848085, severity: 0.0000)
-Selected representative old samples: torch.Size([236, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  10
-No drift in window 1 (p-value: 0.620490, severity: 0.0000)
-Selected representative old samples: torch.Size([365, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  11
-No drift in window 1 (p-value: 0.095568, severity: 0.0000)
-Selected representative old samples: torch.Size([251, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  12
-No drift in window 1 (p-value: 0.381936, severity: 0.0000)
-Selected representative old samples: torch.Size([76, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  13
-No drift in window 1 (p-value: 0.873630, severity: 0.0000)
-Selected representative old samples: torch.Size([136, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  14
-!!! Drift in window 1 (p-value: 0.003258, severity: 0.2487)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([225, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 24919 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.3756, epochs=14, severity=0.2487
-epoch =  0
-seed =  5013 , i =  15
-!!! Drift in window 1 (p-value: 0.010967, severity: 0.1960)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([4799, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 20345 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.4020, epochs=13, severity=0.1960
-epoch =  0
-seed =  5013 , i =  16
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([6863, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 18281 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5013 , i =  17
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([7060, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 18084 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5013 , i =  18
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([9784, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 15360 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5013 , i =  19
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([3174, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 21970 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5013 , i =  20
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([9408, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 15736 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5013 , i =  21
-!!! Drift in window 1 (p-value: 0.000018, severity: 0.4743)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([676, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 24468 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.2629, epochs=19, severity=0.4743
-epoch =  0
-seed =  5013 , i =  22
-!!! Drift in window 1 (p-value: 0.000000, severity: 0.7931)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([88, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 25056 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.1034, epochs=25, severity=0.7931
-epoch =  0
-seed =  5013 , i =  23
-No drift in window 1 (p-value: 0.999970, severity: 0.0000)
-Selected representative old samples: torch.Size([0, 121])
-Selected representative new samples: torch.Size([0, 121])
-Not enough representative new samples selected (0). Selecting additional random samples.
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5013 , i =  24
-Selected representative old samples: torch.Size([979, 121])
-Selected representative new samples: torch.Size([3323, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
---------------------------- performance_after_continual_training -----------------------------------
-Confusion matrix
-[[9510  176]
- [9531 3095]]
-Accuracy  0.5649426317676587
-Precision  0.9461938245184959
-Recall  0.24512909868525265
-F1 score  0.38938164433540917
+
+============================================================
+Seed 5013 (3/5) | dataset=nsl | mode=ua-ssf
+============================================================
+[Offline] Training 200 epochs... done
+[Before CL]
+  Acc=0.8637  Pre=0.8922  Rec=0.8651  F1=0.8785
+  Confusion: TP=11102 FP=1341 FN=1731 TN=8370
+  Samples: old=57, new=5000[W00] stable(p=0.1832) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=52, new=5000[W01] stable(p=0.4909) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=124, new=5000[W02] stable(p=0.9987) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=165, new=5000[W03] stable(p=0.6341) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=231, new=5000[W04] stable(p=0.8094) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=185, new=5000[W05] stable(p=0.5448) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=262, new=5000[W06] stable(p=0.4385) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=188, new=5000[W07] stable(p=0.9953) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=220, new=5000[W08] stable(p=0.9518) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=236, new=5000[W09] stable(p=0.8481) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=365, new=5000[W10] stable(p=0.6205) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=251, new=5000[W11] stable(p=0.0956) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=76, new=5000[W12] stable(p=0.3819) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=136, new=5000[W13] stable(p=0.8736) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=225, new=5000 | pseudo_fill=24919[W14] DRIFT(sev=0.25) | lwf=0.38 ep=14 | buf=10225
+  Samples: old=4799, new=5000 | pseudo_fill=20345[W15] DRIFT(sev=0.20) | lwf=0.40 ep=13 | buf=14799
+  Samples: old=6863, new=5000 | pseudo_fill=18281[W16] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=16863
+  Samples: old=7060, new=5000 | pseudo_fill=18084[W17] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=17060
+  Samples: old=9784, new=5000 | pseudo_fill=15360[W18] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=19784
+  Samples: old=3174, new=5000 | pseudo_fill=21970[W19] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=13174
+  Samples: old=9408, new=5000 | pseudo_fill=15736[W20] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=19408
+  Samples: old=676, new=5000 | pseudo_fill=24468[W21] DRIFT(sev=0.47) | lwf=0.26 ep=19 | buf=10676
+  Samples: old=88, new=5000 | pseudo_fill=25056[W22] DRIFT(sev=0.79) | lwf=0.10 ep=25 | buf=10088
+  Samples: old=0, new=0 | new补充=50[W23] stable(p=1.0000) | lwf=0.50 ep=10 | buf=10088
+  Samples: old=979, new=3323[W24] stable(p=1.0000) | lwf=0.50 ep=10 | buf=10088
+[After CL]
+  Acc=0.5649  Pre=0.9462  Rec=0.2451  F1=0.3894
+  Confusion: TP=3095 FP=176 FN=9531 TN=9510
 Random seed set to: 5014
-Current seed: 5014
-shape of x_train  torch.Size([125973, 121])
-shape of x_test is  torch.Size([22544, 121])
-size of memory is  25194.599999999995
-seed =  5014 , first round: epoch =  0
-seed =  5014 , first round: epoch =  50
-seed =  5014 , first round: epoch =  100
-seed =  5014 , first round: epoch =  150
-shape of x_test_left_epoch is  torch.Size([123323, 121])
---------------------------- performance_before_continual_training -----------------------------------
-Confusion matrix
-[[ 8534  1177]
- [ 2139 10694]]
-Accuracy  0.8529098651525905
-Precision  0.9008508129053997
-Recall  0.8333203459830125
-F1 score  0.865770725388601
-seed =  5014 , i =  0
-No drift in window 1 (p-value: 0.999981, severity: 0.0000)
-Selected representative old samples: torch.Size([172, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  1
-No drift in window 1 (p-value: 0.400700, severity: 0.0000)
-Selected representative old samples: torch.Size([109, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  2
-No drift in window 1 (p-value: 0.431381, severity: 0.0000)
-Selected representative old samples: torch.Size([109, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  3
-No drift in window 1 (p-value: 0.999875, severity: 0.0000)
-Selected representative old samples: torch.Size([92, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  4
-No drift in window 1 (p-value: 0.706364, severity: 0.0000)
-Selected representative old samples: torch.Size([142, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  5
-No drift in window 1 (p-value: 0.998762, severity: 0.0000)
-Selected representative old samples: torch.Size([186, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  6
-No drift in window 1 (p-value: 0.905748, severity: 0.0000)
-Selected representative old samples: torch.Size([191, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  7
-No drift in window 1 (p-value: 0.724609, severity: 0.0000)
-Selected representative old samples: torch.Size([116, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  8
-No drift in window 1 (p-value: 0.874517, severity: 0.0000)
-Selected representative old samples: torch.Size([222, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  9
-No drift in window 1 (p-value: 0.988669, severity: 0.0000)
-Selected representative old samples: torch.Size([120, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  10
-No drift in window 1 (p-value: 0.948904, severity: 0.0000)
-Selected representative old samples: torch.Size([236, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  11
-No drift in window 1 (p-value: 0.997217, severity: 0.0000)
-Selected representative old samples: torch.Size([99, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  12
-No drift in window 1 (p-value: 0.227447, severity: 0.0000)
-Selected representative old samples: torch.Size([89, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  13
-No drift in window 1 (p-value: 0.681639, severity: 0.0000)
-Selected representative old samples: torch.Size([155, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  14
-No drift in window 1 (p-value: 0.747481, severity: 0.0000)
-Selected representative old samples: torch.Size([137, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  15
-No drift in window 1 (p-value: 0.746837, severity: 0.0000)
-Selected representative old samples: torch.Size([141, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  16
-No drift in window 1 (p-value: 0.110697, severity: 0.0000)
-Selected representative old samples: torch.Size([255, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  17
-No drift in window 1 (p-value: 0.867213, severity: 0.0000)
-Selected representative old samples: torch.Size([168, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  18
-No drift in window 1 (p-value: 0.343564, severity: 0.0000)
-Selected representative old samples: torch.Size([320, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  19
-No drift in window 1 (p-value: 0.097349, severity: 0.0000)
-Selected representative old samples: torch.Size([78, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  20
-!!! Drift in window 1 (p-value: 0.001287, severity: 0.2891)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([289, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 24855 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.3555, epochs=15, severity=0.2891
-epoch =  0
-seed =  5014 , i =  21
-No drift in window 1 (p-value: 0.321621, severity: 0.0000)
-Selected representative old samples: torch.Size([4864, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5014 , i =  22
-!!! Drift in window 1 (p-value: 0.026187, severity: 0.1582)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([600, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 24544 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.4209, epochs=13, severity=0.1582
-epoch =  0
-seed =  5014 , i =  23
-!!! Drift in window 1 (p-value: 0.007990, severity: 0.2097)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([3440, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 21704 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.3951, epochs=14, severity=0.2097
-epoch =  0
-seed =  5014 , i =  24
-Selected representative old samples: torch.Size([6490, 121])
-Selected representative new samples: torch.Size([3323, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
---------------------------- performance_after_continual_training -----------------------------------
-Confusion matrix
-[[8924  786]
- [4942 7652]]
-Accuracy  0.7431850789096126
-Precision  0.9068499644465513
-Recall  0.6075909163093537
-F1 score  0.7276531000380373
+
+============================================================
+Seed 5014 (4/5) | dataset=nsl | mode=ua-ssf
+============================================================
+[Offline] Training 200 epochs... done
+[Before CL]
+  Acc=0.8529  Pre=0.9009  Rec=0.8333  F1=0.8658
+  Confusion: TP=10694 FP=1177 FN=2139 TN=8534
+  Samples: old=172, new=5000[W00] stable(p=1.0000) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=109, new=5000[W01] stable(p=0.4007) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=109, new=5000[W02] stable(p=0.4314) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=92, new=5000[W03] stable(p=0.9999) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=142, new=5000[W04] stable(p=0.7064) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=186, new=5000[W05] stable(p=0.9988) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=191, new=5000[W06] stable(p=0.9057) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=116, new=5000[W07] stable(p=0.7246) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=222, new=5000[W08] stable(p=0.8745) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=120, new=5000[W09] stable(p=0.9887) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=236, new=5000[W10] stable(p=0.9489) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=99, new=5000[W11] stable(p=0.9972) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=89, new=5000[W12] stable(p=0.2274) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=155, new=5000[W13] stable(p=0.6816) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=137, new=5000[W14] stable(p=0.7475) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=141, new=5000[W15] stable(p=0.7468) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=255, new=5000[W16] stable(p=0.1107) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=168, new=5000[W17] stable(p=0.8672) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=320, new=5000[W18] stable(p=0.3436) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=78, new=5000[W19] stable(p=0.0973) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=289, new=5000 | pseudo_fill=24855[W20] DRIFT(sev=0.29) | lwf=0.36 ep=15 | buf=10289
+  Samples: old=4864, new=5000[W21] stable(p=0.3216) | lwf=0.50 ep=10 | buf=10289
+  Samples: old=600, new=5000 | pseudo_fill=24544[W22] DRIFT(sev=0.16) | lwf=0.42 ep=13 | buf=10600
+  Samples: old=3440, new=5000 | pseudo_fill=21704[W23] DRIFT(sev=0.21) | lwf=0.40 ep=14 | buf=13440
+  Samples: old=6490, new=3323[W24] stable(p=1.0000) | lwf=0.50 ep=10 | buf=13440
+[After CL]
+  Acc=0.7432  Pre=0.9068  Rec=0.6076  F1=0.7277
+  Confusion: TP=7652 FP=786 FN=4942 TN=8924
 Random seed set to: 5015
-Current seed: 5015
-shape of x_train  torch.Size([125973, 121])
-shape of x_test is  torch.Size([22544, 121])
-size of memory is  25194.599999999995
-seed =  5015 , first round: epoch =  0
-seed =  5015 , first round: epoch =  50
-seed =  5015 , first round: epoch =  100
-seed =  5015 , first round: epoch =  150
-shape of x_test_left_epoch is  torch.Size([123323, 121])
---------------------------- performance_before_continual_training -----------------------------------
-Confusion matrix
-[[ 8469  1242]
- [ 2703 10130]]
-Accuracy  0.8250088715400994
-Precision  0.890784382694337
-Recall  0.7893711524974675
-F1 score  0.8370171452179302
-seed =  5015 , i =  0
-No drift in window 1 (p-value: 0.414203, severity: 0.0000)
-Selected representative old samples: torch.Size([232, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5015 , i =  1
-!!! Drift in window 1 (p-value: 0.031527, severity: 0.1501)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([160, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 24984 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.4249, epochs=13, severity=0.1501
-epoch =  0
-seed =  5015 , i =  2
-!!! Drift in window 1 (p-value: 0.004017, severity: 0.2396)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([5044, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 20100 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.3802, epochs=14, severity=0.2396
-epoch =  0
-seed =  5015 , i =  3
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([6838, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 18306 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5015 , i =  4
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([6650, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 18494 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5015 , i =  5
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([8142, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 17002 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5015 , i =  6
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([4198, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 20946 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5015 , i =  7
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([4808, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 20336 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5015 , i =  8
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([6898, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 18246 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5015 , i =  9
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([6518, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 18626 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5015 , i =  10
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([0, 121])
-Selected representative new samples: torch.Size([0, 121])
-Not enough representative samples selected (0). Selecting additional random samples.
-Buffer memory has extra space for 25144 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=30, severity=1.0000
-epoch =  0
-seed =  5015 , i =  11
-No drift in window 1 (p-value: 0.200289, severity: 0.0000)
-Selected representative old samples: torch.Size([1944, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5015 , i =  12
-No drift in window 1 (p-value: 0.553149, severity: 0.0000)
-Selected representative old samples: torch.Size([1934, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5015 , i =  13
-No drift in window 1 (p-value: 0.135394, severity: 0.0000)
-Selected representative old samples: torch.Size([0, 121])
-Selected representative new samples: torch.Size([0, 121])
-Not enough representative new samples selected (0). Selecting additional random samples.
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5015 , i =  14
-No drift in window 1 (p-value: 0.903651, severity: 0.0000)
-Selected representative old samples: torch.Size([7, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5015 , i =  15
-No drift in window 1 (p-value: 0.758169, severity: 0.0000)
-Selected representative old samples: torch.Size([6, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5015 , i =  16
-No drift in window 1 (p-value: 0.907967, severity: 0.0000)
-Selected representative old samples: torch.Size([1896, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5015 , i =  17
-No drift in window 1 (p-value: 0.122180, severity: 0.0000)
-Selected representative old samples: torch.Size([1889, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5015 , i =  18
-No drift in window 1 (p-value: 0.864508, severity: 0.0000)
-Selected representative old samples: torch.Size([14, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5015 , i =  19
-No drift in window 1 (p-value: 0.784198, severity: 0.0000)
-Selected representative old samples: torch.Size([9, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5015 , i =  20
-!!! Drift in window 1 (p-value: 0.002211, severity: 0.2656)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([1876, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 23268 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.3672, epochs=15, severity=0.2656
-epoch =  0
-seed =  5015 , i =  21
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([5656, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Buffer memory has extra space for 19488 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=29, severity=1.0000
-epoch =  0
-seed =  5015 , i =  22
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([0, 121])
-Selected representative new samples: torch.Size([0, 121])
-Not enough representative samples selected (0). Selecting additional random samples.
-Buffer memory has extra space for 25144 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=29, severity=1.0000
-epoch =  0
-seed =  5015 , i =  23
-No drift in window 1 (p-value: 0.686521, severity: 0.0000)
-Selected representative old samples: torch.Size([33, 121])
-Selected representative new samples: torch.Size([5000, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
-seed =  5015 , i =  24
-Selected representative old samples: torch.Size([57, 121])
-Selected representative new samples: torch.Size([3323, 121])
-Training with adaptive_lwf=0.5000, epochs=10, severity=0.0000
-epoch =  0
---------------------------- performance_after_continual_training -----------------------------------
-Confusion matrix
-[[8460 1229]
- [2965 9647]]
-Accuracy  0.811936684453612
-Precision  0.8869988966531813
-Recall  0.7649064383127181
-F1 score  0.8214407356948229
+
+============================================================
+Seed 5015 (5/5) | dataset=nsl | mode=ua-ssf
+============================================================
+[Offline] Training 200 epochs... done
+[Before CL]
+  Acc=0.8250  Pre=0.8908  Rec=0.7894  F1=0.8370
+  Confusion: TP=10130 FP=1242 FN=2703 TN=8469
+  Samples: old=232, new=5000[W00] stable(p=0.4142) | lwf=0.50 ep=10 | buf=25194
+  Samples: old=160, new=5000 | pseudo_fill=24984[W01] DRIFT(sev=0.15) | lwf=0.42 ep=13 | buf=10160
+  Samples: old=5044, new=5000 | pseudo_fill=20100[W02] DRIFT(sev=0.24) | lwf=0.38 ep=14 | buf=15044
+  Samples: old=6838, new=5000 | pseudo_fill=18306[W03] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=16838
+  Samples: old=6650, new=5000 | pseudo_fill=18494[W04] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=16650
+  Samples: old=8142, new=5000 | pseudo_fill=17002[W05] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=18142
+  Samples: old=4198, new=5000 | pseudo_fill=20946[W06] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=14198
+  Samples: old=4808, new=5000 | pseudo_fill=20336[W07] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=14808
+  Samples: old=6898, new=5000 | pseudo_fill=18246[W08] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=16898
+  Samples: old=6518, new=5000 | pseudo_fill=18626[W09] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=16518
+  Samples: old=0, new=0 | new补充=50 | pseudo_fill=25144[W10] DRIFT(sev=1.00) | lwf=0.00 ep=30 | buf=5050
+  Samples: old=1944, new=5000[W11] stable(p=0.2003) | lwf=0.50 ep=10 | buf=5050
+  Samples: old=1934, new=5000[W12] stable(p=0.5531) | lwf=0.50 ep=10 | buf=5050
+  Samples: old=0, new=0 | new补充=50[W13] stable(p=0.1354) | lwf=0.50 ep=10 | buf=5050
+  Samples: old=7, new=5000[W14] stable(p=0.9037) | lwf=0.50 ep=10 | buf=5050
+  Samples: old=6, new=5000[W15] stable(p=0.7582) | lwf=0.50 ep=10 | buf=5050
+  Samples: old=1896, new=5000[W16] stable(p=0.9080) | lwf=0.50 ep=10 | buf=5050
+  Samples: old=1889, new=5000[W17] stable(p=0.1222) | lwf=0.50 ep=10 | buf=5050
+  Samples: old=14, new=5000[W18] stable(p=0.8645) | lwf=0.50 ep=10 | buf=5050
+  Samples: old=9, new=5000[W19] stable(p=0.7842) | lwf=0.50 ep=10 | buf=5050
+  Samples: old=1876, new=5000 | pseudo_fill=23268[W20] DRIFT(sev=0.27) | lwf=0.37 ep=15 | buf=11876
+  Samples: old=5656, new=5000 | pseudo_fill=19488[W21] DRIFT(sev=1.00) | lwf=0.00 ep=29 | buf=15656
+  Samples: old=0, new=0 | new补充=50 | pseudo_fill=25144[W22] DRIFT(sev=1.00) | lwf=0.00 ep=29 | buf=5050
+  Samples: old=33, new=5000[W23] stable(p=0.6865) | lwf=0.50 ep=10 | buf=5050
+  Samples: old=57, new=3323[W24] stable(p=1.0000) | lwf=0.50 ep=10 | buf=5050
+[After CL]
+  Acc=0.8119  Pre=0.8870  Rec=0.7649  F1=0.8214
+  Confusion: TP=9647 FP=1229 FN=2965 TN=8460
 
 # 2.unsw
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5012 , i =  4
-No drift in window 1 (p-value: 0.071573, severity: 0.0000)
-Selected representative old samples: torch.Size([20075, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Not enough non-representative old samples to remove (125). Removing additional representative samples.
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5012 , i =  5
-!!! Drift in window 1 (p-value: 0.012909, severity: 0.1889)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([0, 196])
-Selected representative new samples: torch.Size([0, 196])
-Not enough representative samples selected (0). Selecting additional random samples.
-Buffer memory has extra space for 34868 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.4055, epochs=124, severity=0.1889
-epoch =  0
-epoch =  50
-epoch =  100
-seed =  5012 , i =  6
-No drift in window 1 (p-value: 0.470752, severity: 0.0000)
-Selected representative old samples: torch.Size([5151, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5012 , i =  7
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([5148, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Buffer memory has extra space for 29720 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=270, severity=1.0000
-epoch =  0
-epoch =  50
-epoch =  100
-epoch =  150
-epoch =  200
-epoch =  250
-seed =  5012 , i =  8
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([34941, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Not enough non-representative old samples to remove (127). Removing additional representative samples.
-Training with adaptive_lwf=0.0000, epochs=270, severity=1.0000
-epoch =  0
-epoch =  50
-epoch =  100
-epoch =  150
-epoch =  200
-epoch =  250
-seed =  5012 , i =  9
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([0, 196])
-Selected representative new samples: torch.Size([0, 196])
-Not enough representative samples selected (0). Selecting additional random samples.
-Buffer memory has extra space for 34868 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=270, severity=1.0000
-epoch =  0
-epoch =  50
-epoch =  100
-epoch =  150
-epoch =  200
-epoch =  250
-seed =  5012 , i =  10
-No drift in window 1 (p-value: 0.100940, severity: 0.0000)
-Selected representative old samples: torch.Size([5139, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5012 , i =  11
-Selected representative old samples: torch.Size([14713, 196])
-Selected representative new samples: torch.Size([2605, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
---------------------------- performance_after_continual_training -----------------------------------
-Confusion matrix
-[[21495 15209]
- [   81 44549]]
-Accuracy  0.8120097376251014
-Precision  0.7454901435791024
-Recall  0.998185077302263
-F1 score  0.853527225351573
+(ssf) jackson@omnisky:~/wkcodenew/SSF-Strategic-Selection-and-Forgetting-main$ python ssf.py --mode ua-ssf --dataset unsw --epochs 200 --epoch_1 180 --sample_interval 20000 --num_labeled_sample 200 --opt_old_lr 24 --opt_new_lr 50 --new_sample_weight 60 --cuda 0
+Random seed set to: 5011
+
+============================================================
+Seed 5011 (1/5) | dataset=unsw | mode=ua-ssf
+============================================================
+[Config] train=175341, test=82332, memory=35068, input_dim=196
+[Offline] Training 200 epochs... done
+[Before CL]
+  Acc=0.8185  Pre=0.7557  Rec=0.9907  F1=0.8574
+  Confusion: TP=44909 FP=14519 FN=423 TN=22481
+  Samples: old=17435, new=20000[W00] stable(p=0.1100) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=24874, new=20000[W01] stable(p=0.1370) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=0, new=20000 | pseudo_fill=34868[W02] DRIFT(sev=0.39) | lwf=0.31 ep=159 | buf=35068
+  Samples: old=9901, new=20000[W03] stable(p=0.1584) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=15070, new=20000[W04] stable(p=0.2079) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=0, new=20000 | pseudo_fill=34868[W05] DRIFT(sev=0.33) | lwf=0.33 ep=150 | buf=35068
+  Samples: old=244, new=20000 | pseudo_fill=34624[W06] DRIFT(sev=0.18) | lwf=0.41 ep=122 | buf=35068
+  Samples: old=225, new=20000 | pseudo_fill=34643[W07] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=35068
+  Samples: old=239, new=20000[W08] stable(p=0.6188) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=206, new=20000[W09] stable(p=0.3512) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=125, new=20000 | pseudo_fill=34743[W10] DRIFT(sev=0.13) | lwf=0.43 ep=113 | buf=35068
+  Samples: old=158, new=2605[W11] stable(p=1.0000) | lwf=0.50 ep=90 | buf=35068
+[After CL]
+  Acc=0.8176  Pre=0.7531  Rec=0.9898  F1=0.8554
+  Confusion: TP=43881 FP=14384 FN=454 TN=22615
+Random seed set to: 5012
+
+============================================================
+Seed 5012 (2/5) | dataset=unsw | mode=ua-ssf
+============================================================
+[Offline] Training 200 epochs... done
+[Before CL]
+  Acc=0.8178  Pre=0.7554  Rec=0.9895  F1=0.8567
+  Confusion: TP=44857 FP=14527 FN=475 TN=22473
+  Samples: old=17257, new=20000[W00] stable(p=0.6201) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=27365, new=20000 | pseudo_fill=7503[W01] DRIFT(sev=0.14) | lwf=0.43 ep=114 | buf=35068
+  Samples: old=0, new=0 | new补充=200 | pseudo_fill=34868[W02] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=20200
+  Samples: old=5113, new=20000[W03] stable(p=0.2854) | lwf=0.50 ep=90 | buf=20200
+  Samples: old=20075, new=20000 | WARN: not enough non-rep old to remove (125)[W04] stable(p=0.0716) | lwf=0.50 ep=90 | buf=20200
+  Samples: old=0, new=0 | new补充=200 | pseudo_fill=34868[W05] DRIFT(sev=0.19) | lwf=0.41 ep=124 | buf=20200
+  Samples: old=5151, new=20000[W06] stable(p=0.4708) | lwf=0.50 ep=90 | buf=20200
+  Samples: old=5148, new=20000 | pseudo_fill=29720[W07] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=35068
+  Samples: old=34941, new=20000 | WARN: not enough non-rep old (127)[W08] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=35068
+  Samples: old=0, new=0 | new补充=200 | pseudo_fill=34868[W09] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=20200
+  Samples: old=5139, new=20000[W10] stable(p=0.1009) | lwf=0.50 ep=90 | buf=20200
+  Samples: old=14713, new=2605[W11] stable(p=1.0000) | lwf=0.50 ep=90 | buf=20200
+[After CL]
+  Acc=0.8120  Pre=0.7455  Rec=0.9982  F1=0.8535
+  Confusion: TP=44549 FP=15209 FN=81 TN=21495
 Random seed set to: 5013
-Current seed: 5013
-shape of x_train  torch.Size([175341, 196])
-shape of x_test is  torch.Size([82332, 196])
-size of memory is  35068.19999999999
-seed =  5013 , first round: epoch =  0
-seed =  5013 , first round: epoch =  50
-seed =  5013 , first round: epoch =  100
-seed =  5013 , first round: epoch =  150
-shape of x_test_left_epoch is  torch.Size([222605, 196])
---------------------------- performance_before_contunual_training -----------------------------------
-Confusion matrix
-[[22458 14542]
- [  482 44850]]
-Accuracy  0.8175193120536365
-Precision  0.7551522090517241
-Recall  0.9893673343333628
-F1 score  0.8565371834536496
-seed =  5013 , i =  0
-No drift in window 1 (p-value: 0.833235, severity: 0.0000)
-Selected representative old samples: torch.Size([256, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5013 , i =  1
-No drift in window 1 (p-value: 0.772182, severity: 0.0000)
-Selected representative old samples: torch.Size([29, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5013 , i =  2
-No drift in window 1 (p-value: 0.188732, severity: 0.0000)
-Selected representative old samples: torch.Size([2902, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5013 , i =  3
-No drift in window 1 (p-value: 0.056708, severity: 0.0000)
-Selected representative old samples: torch.Size([9450, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5013 , i =  4
-No drift in window 1 (p-value: 0.050074, severity: 0.0000)
-Selected representative old samples: torch.Size([9165, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5013 , i =  5
-!!! Drift in window 1 (p-value: 0.001720, severity: 0.2764)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([29092, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Buffer memory has extra space for 5776 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.3618, epochs=139, severity=0.2764
-epoch =  0
-epoch =  50
-epoch =  100
-seed =  5013 , i =  6
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([0, 196])
-Selected representative new samples: torch.Size([0, 196])
-Not enough representative samples selected (0). Selecting additional random samples.
-Buffer memory has extra space for 34868 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=270, severity=1.0000
-epoch =  0
-epoch =  50
-epoch =  100
-epoch =  150
-epoch =  200
-epoch =  250
-seed =  5013 , i =  7
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([13951, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Buffer memory has extra space for 20917 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=270, severity=1.0000
-epoch =  0
-epoch =  50
-epoch =  100
-epoch =  150
-epoch =  200
-epoch =  250
-seed =  5013 , i =  8
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([29181, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Buffer memory has extra space for 5687 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=270, severity=1.0000
-epoch =  0
-epoch =  50
-epoch =  100
-epoch =  150
-epoch =  200
-epoch =  250
-seed =  5013 , i =  9
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([0, 196])
-Selected representative new samples: torch.Size([0, 196])
-Not enough representative samples selected (0). Selecting additional random samples.
-Buffer memory has extra space for 34868 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=270, severity=1.0000
-epoch =  0
-epoch =  50
-epoch =  100
-epoch =  150
-epoch =  200
-epoch =  250
-seed =  5013 , i =  10
-No drift in window 1 (p-value: 0.753691, severity: 0.0000)
-Selected representative old samples: torch.Size([9790, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5013 , i =  11
-Selected representative old samples: torch.Size([19928, 196])
-Selected representative new samples: torch.Size([2605, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
---------------------------- performance_after_continual_training -----------------------------------
-Confusion matrix
-[[21334 15415]
- [  107 44482]]
-Accuracy  0.8091666871572942
-Precision  0.7426415346344558
-Recall  0.9976003050079616
-F1 score  0.8514442126217866
+
+============================================================
+Seed 5013 (3/5) | dataset=unsw | mode=ua-ssf
+============================================================
+[Offline] Training 200 epochs... done
+[Before CL]
+  Acc=0.8175  Pre=0.7552  Rec=0.9894  F1=0.8565
+  Confusion: TP=44850 FP=14542 FN=482 TN=22458
+  Samples: old=256, new=20000[W00] stable(p=0.8332) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=29, new=20000[W01] stable(p=0.7722) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=2902, new=20000[W02] stable(p=0.1887) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=9450, new=20000[W03] stable(p=0.0567) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=9165, new=20000[W04] stable(p=0.0501) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=29092, new=20000 | pseudo_fill=5776[W05] DRIFT(sev=0.28) | lwf=0.36 ep=139 | buf=35068
+  Samples: old=0, new=0 | new补充=200 | pseudo_fill=34868[W06] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=20200
+  Samples: old=13951, new=20000 | pseudo_fill=20917[W07] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=35068
+  Samples: old=29181, new=20000 | pseudo_fill=5687[W08] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=35068
+  Samples: old=0, new=0 | new补充=200 | pseudo_fill=34868[W09] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=20200
+  Samples: old=9790, new=20000[W10] stable(p=0.7537) | lwf=0.50 ep=90 | buf=20200
+  Samples: old=19928, new=2605[W11] stable(p=1.0000) | lwf=0.50 ep=90 | buf=20200
+[After CL]
+  Acc=0.8092  Pre=0.7426  Rec=0.9976  F1=0.8514
+  Confusion: TP=44482 FP=15415 FN=107 TN=21334
 Random seed set to: 5014
-Current seed: 5014
-shape of x_train  torch.Size([175341, 196])
-shape of x_test is  torch.Size([82332, 196])
-size of memory is  35068.19999999999
-seed =  5014 , first round: epoch =  0
-seed =  5014 , first round: epoch =  50
-seed =  5014 , first round: epoch =  100
-seed =  5014 , first round: epoch =  150
-shape of x_test_left_epoch is  torch.Size([222605, 196])
---------------------------- performance_before_contunual_training -----------------------------------
-Confusion matrix
-[[22165 14835]
- [  294 45038]]
-Accuracy  0.8162439877568868
-Precision  0.7522255440682779
-Recall  0.993514515132798
-F1 score  0.8561950477638895
-seed =  5014 , i =  0
-!!! Drift in window 1 (p-value: 0.005214, severity: 0.2283)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([17328, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Buffer memory has extra space for 17540 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.3859, epochs=131, severity=0.2283
-epoch =  0
-epoch =  50
-epoch =  100
-seed =  5014 , i =  1
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([31618, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Buffer memory has extra space for 3250 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=270, severity=1.0000
-epoch =  0
-epoch =  50
-epoch =  100
-epoch =  150
-epoch =  200
-epoch =  250
-seed =  5014 , i =  2
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([0, 196])
-Selected representative new samples: torch.Size([0, 196])
-Not enough representative samples selected (0). Selecting additional random samples.
-Buffer memory has extra space for 34868 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=270, severity=1.0000
-epoch =  0
-epoch =  50
-epoch =  100
-epoch =  150
-epoch =  200
-epoch =  250
-seed =  5014 , i =  3
-No drift in window 1 (p-value: 0.819171, severity: 0.0000)
-Selected representative old samples: torch.Size([19882, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5014 , i =  4
-!!! Drift in window 1 (p-value: 0.003164, severity: 0.2500)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([20106, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Not enough non-representative old samples to remove (94). Removing additional representative samples.
-Buffer memory has extra space for 14868 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.3750, epochs=134, severity=0.2500
-epoch =  0
-epoch =  50
-epoch =  100
-seed =  5014 , i =  5
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([0, 196])
-Selected representative new samples: torch.Size([0, 196])
-Not enough representative samples selected (0). Selecting additional random samples.
-Buffer memory has extra space for 34868 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=270, severity=1.0000
-epoch =  0
-epoch =  50
-epoch =  100
-epoch =  150
-epoch =  200
-epoch =  250
-seed =  5014 , i =  6
-No drift in window 1 (p-value: 0.837348, severity: 0.0000)
-Selected representative old samples: torch.Size([5424, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5014 , i =  7
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([5397, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Buffer memory has extra space for 29471 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=270, severity=1.0000
-epoch =  0
-epoch =  50
-epoch =  100
-epoch =  150
-epoch =  200
-epoch =  250
-seed =  5014 , i =  8
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([12423, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Buffer memory has extra space for 22445 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=270, severity=1.0000
-epoch =  0
-epoch =  50
-epoch =  100
-epoch =  150
-epoch =  200
-epoch =  250
-seed =  5014 , i =  9
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([45, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Buffer memory has extra space for 34823 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=270, severity=1.0000
-epoch =  0
-epoch =  50
-epoch =  100
-epoch =  150
-epoch =  200
-epoch =  250
-seed =  5014 , i =  10
-No drift in window 1 (p-value: 0.507784, severity: 0.0000)
-Selected representative old samples: torch.Size([0, 196])
-Selected representative new samples: torch.Size([0, 196])
-Not enough representative new samples selected (0). Selecting additional random samples.
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5014 , i =  11
-Selected representative old samples: torch.Size([16679, 196])
-Selected representative new samples: torch.Size([2605, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
---------------------------- performance_after_continual_training -----------------------------------
-Confusion matrix
-[[19786 17126]
- [  204 44223]]
-Accuracy  0.7869410737776467
-Precision  0.7208430455264144
-Recall  0.9954081977176041
-F1 score  0.8361632128271063
+
+============================================================
+Seed 5014 (4/5) | dataset=unsw | mode=ua-ssf
+============================================================
+[Offline] Training 200 epochs... done
+[Before CL]
+  Acc=0.8162  Pre=0.7522  Rec=0.9935  F1=0.8562
+  Confusion: TP=45038 FP=14835 FN=294 TN=22165
+  Samples: old=17328, new=20000 | pseudo_fill=17540[W00] DRIFT(sev=0.23) | lwf=0.39 ep=131 | buf=35068
+  Samples: old=31618, new=20000 | pseudo_fill=3250[W01] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=35068
+  Samples: old=0, new=0 | new补充=200 | pseudo_fill=34868[W02] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=20200
+  Samples: old=19882, new=20000[W03] stable(p=0.8192) | lwf=0.50 ep=90 | buf=20200
+  Samples: old=20106, new=20000 | WARN: not enough non-rep old (94) | pseudo_fill=14868[W04] DRIFT(sev=0.25) | lwf=0.38 ep=134 | buf=35068
+  Samples: old=0, new=0 | new补充=200 | pseudo_fill=34868[W05] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=20200
+  Samples: old=5424, new=20000[W06] stable(p=0.8373) | lwf=0.50 ep=90 | buf=20200
+  Samples: old=5397, new=20000 | pseudo_fill=29471[W07] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=35068
+  Samples: old=12423, new=20000 | pseudo_fill=22445[W08] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=35068
+  Samples: old=45, new=20000 | pseudo_fill=34823[W09] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=35068
+  Samples: old=0, new=0 | new补充=200[W10] stable(p=0.5078) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=16679, new=2605[W11] stable(p=1.0000) | lwf=0.50 ep=90 | buf=35068
+[After CL]
+  Acc=0.7869  Pre=0.7208  Rec=0.9954  F1=0.8362
+  Confusion: TP=44223 FP=17126 FN=204 TN=19786
 Random seed set to: 5015
-Current seed: 5015
-shape of x_train  torch.Size([175341, 196])
-shape of x_test is  torch.Size([82332, 196])
-size of memory is  35068.19999999999
-seed =  5015 , first round: epoch =  0
-seed =  5015 , first round: epoch =  50
-seed =  5015 , first round: epoch =  100
-seed =  5015 , first round: epoch =  150
-shape of x_test_left_epoch is  torch.Size([222605, 196])
---------------------------- performance_before_contunual_training -----------------------------------
-Confusion matrix
-[[22434 14566]
- [  427 44905]]
-Accuracy  0.8178958363698198
-Precision  0.7550739015654688
-Recall  0.9905806053119209
-F1 score  0.8569411180977642
-seed =  5015 , i =  0
-No drift in window 1 (p-value: 0.899179, severity: 0.0000)
-Selected representative old samples: torch.Size([19856, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5015 , i =  1
-No drift in window 1 (p-value: 0.298957, severity: 0.0000)
-Selected representative old samples: torch.Size([0, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5015 , i =  2
-!!! Drift in window 1 (p-value: 0.023585, severity: 0.1627)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([0, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Buffer memory has extra space for 34868 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.4186, epochs=119, severity=0.1627
-epoch =  0
-epoch =  50
-epoch =  100
-seed =  5015 , i =  3
-No drift in window 1 (p-value: 0.064803, severity: 0.0000)
-Selected representative old samples: torch.Size([30592, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5015 , i =  4
-No drift in window 1 (p-value: 0.574145, severity: 0.0000)
-Selected representative old samples: torch.Size([9803, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5015 , i =  5
-No drift in window 1 (p-value: 0.475751, severity: 0.0000)
-Selected representative old samples: torch.Size([13926, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5015 , i =  6
-No drift in window 1 (p-value: 0.698731, severity: 0.0000)
-Selected representative old samples: torch.Size([311, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5015 , i =  7
-!!! Drift in window 1 (p-value: 0.000000, severity: 1.0000)
-Drift detected, update the model...
-Selected representative old samples: torch.Size([226, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Buffer memory has extra space for 34642 samples. Adding new samples with pseudo labels.
-Training with adaptive_lwf=0.0000, epochs=270, severity=1.0000
-epoch =  0
-epoch =  50
-epoch =  100
-epoch =  150
-epoch =  200
-epoch =  250
-seed =  5015 , i =  8
-No drift in window 1 (p-value: 0.453457, severity: 0.0000)
-Selected representative old samples: torch.Size([212, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5015 , i =  9
-No drift in window 1 (p-value: 0.304165, severity: 0.0000)
-Selected representative old samples: torch.Size([307, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5015 , i =  10
-No drift in window 1 (p-value: 0.311434, severity: 0.0000)
-Selected representative old samples: torch.Size([176, 196])
-Selected representative new samples: torch.Size([20000, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
-seed =  5015 , i =  11
-Selected representative old samples: torch.Size([138, 196])
-Selected representative new samples: torch.Size([2605, 196])
-Training with adaptive_lwf=0.5000, epochs=90, severity=0.0000
-epoch =  0
-epoch =  50
---------------------------- performance_after_continual_training -----------------------------------
-Confusion matrix
-[[22918 14078]
- [  640 43703]]
-Accuracy  0.8190535905285288
-Precision  0.7563558955365951
-Recall  0.9855670568071624
-F1 score  0.8558810857389056
+
+============================================================
+Seed 5015 (5/5) | dataset=unsw | mode=ua-ssf
+============================================================
+[Offline] Training 200 epochs... done
+[Before CL]
+  Acc=0.8179  Pre=0.7551  Rec=0.9906  F1=0.8569
+  Confusion: TP=44905 FP=14566 FN=427 TN=22434
+  Samples: old=19856, new=20000[W00] stable(p=0.8992) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=0, new=20000[W01] stable(p=0.2990) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=0, new=20000 | pseudo_fill=34868[W02] DRIFT(sev=0.16) | lwf=0.42 ep=119 | buf=35068
+  Samples: old=30592, new=20000[W03] stable(p=0.0648) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=9803, new=20000[W04] stable(p=0.5741) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=13926, new=20000[W05] stable(p=0.4758) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=311, new=20000[W06] stable(p=0.6987) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=226, new=20000 | pseudo_fill=34642[W07] DRIFT(sev=1.00) | lwf=0.00 ep=270 | buf=35068
+  Samples: old=212, new=20000[W08] stable(p=0.4535) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=307, new=20000[W09] stable(p=0.3042) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=176, new=20000[W10] stable(p=0.3114) | lwf=0.50 ep=90 | buf=35068
+  Samples: old=138, new=2605[W11] stable(p=1.0000) | lwf=0.50 ep=90 | buf=35068
+[After CL]
+  Acc=0.8191  Pre=0.7564  Rec=0.9856  F1=0.8559
+  Confusion: TP=43703 FP=14078 FN=640 TN=22918
