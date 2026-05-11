@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Data files (large datasets)
+*.pcap
+*.csv
+*.pkl
+*.h5
+*.npy
+
+# Logs
+*.log
