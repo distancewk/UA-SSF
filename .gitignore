@@ -21,5 +21,10 @@ Thumbs.db
 *.h5
 *.npy
 
+# Data directories
+CICIDS-2017/
+NSL_pre_data/
+UNSW_pre_data/
+
 # Logs
 *.log
