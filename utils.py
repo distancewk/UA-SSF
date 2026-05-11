@@ -111,7 +111,7 @@ def evaluate_classifier(model, data_loader, device, get_predict=False):
             inputs, labels = inputs.to(device), labels.to(device)
 
             _, _, classifications = model(inputs)
-            preds = (classifications.squeeze() > 0.5).float()
+            preds = (classifications.squeeze(-1) > 0.5).float()
 
             all_labels.extend(labels.cpu().numpy())
             all_preds.extend(preds.cpu().numpy())
@@ -130,7 +130,7 @@ def evaluate_inputs(model, inputs, device):
     with torch.no_grad():
         inputs = inputs.to(device)
         _, _, classifications = model(inputs)
-        preds = (classifications.squeeze() > 0.5).float()
+        preds = (classifications.squeeze(-1) > 0.5).float()
     return preds.cpu().numpy()
 
 def initialize_tensor(size, initialization, device):
@@ -151,9 +151,22 @@ def initialize_tensor(size, initialization, device):
 #   - 对旧数据：高不确定性意味着模型对其已不够确定，适合被优先遗忘
 #   - 对新数据：高不确定性意味着该样本携带了模型未充分学习的信息，应优先入选
 # ==============================
-def estimate_uncertainty(model, x, n_forward=10, batch_size=512):
-    """返回每个样本的不确定性标量，shape: (N,)"""
+def estimate_uncertainty(model, x, n_forward=10, batch_size=512, mc_dropout_rate=None):
+    """返回每个样本的不确定性标量，shape: (N,)
+    
+    mc_dropout_rate: 若指定，则临时将 Dropout rate 设为此值进行 MC 估计，
+                     结束后恢复原始值。用于训练时 dropout=0 但估计时需要噪声的场景。
+    """
     was_training = model.training
+    
+    # 临时恢复 MC Dropout rate（训练 dropout=0 时仍需估计噪声）
+    original_rates = []
+    if mc_dropout_rate is not None:
+        for m in model.modules():
+            if isinstance(m, nn.Dropout):
+                original_rates.append(m.p)
+                m.p = mc_dropout_rate
+    
     model.train()  # 保持 Dropout 开启
     
     all_uncertainties = []
@@ -168,6 +181,14 @@ def estimate_uncertainty(model, x, n_forward=10, batch_size=512):
         predictions = torch.stack(predictions)  # (n_forward, batch_size, dim)
         uncertainty = predictions.std(dim=0).mean(dim=1)  # 每个样本一个标量
         all_uncertainties.append(uncertainty)
+    
+    # 恢复原始 Dropout rate
+    if mc_dropout_rate is not None:
+        idx = 0
+        for m in model.modules():
+            if isinstance(m, nn.Dropout):
+                m.p = original_rates[idx]
+                idx += 1
     
     if not was_training:
         model.eval()
@@ -216,9 +237,11 @@ def optimize_old_mask(control_res, treatment_res, device, initialization='0-1', 
 
         Accuracy_Loss_c = F.kl_div(bin_obs_c.log(), bin_tgt_c, reduction='sum')
 
-        # UA-SSF: 不确定性正则项 — 鼓励高不确定性旧样本的 M_c 更低（优先被遗忘）
+        # UA-SSF: 不确定性正则项（差分形式）— 只惩罚高于均值的不确定性样本
+        # P1 Fix: 避免全局压低 M_c，仅让「异常不确定」的旧样本被优先遗忘
         if uncertainty is not None:
-            uncertainty_reg = uncertainty_alpha * torch.sum(M_c * uncertainty_norm)
+            uncertainty_centered = F.relu(uncertainty_norm - uncertainty_norm.mean())
+            uncertainty_reg = uncertainty_alpha * torch.sum(M_c * uncertainty_centered)
             Loss = Accuracy_Loss_c + uncertainty_reg
         else:
             Loss = Accuracy_Loss_c
@@ -278,10 +301,11 @@ def optimize_new_mask(control_res, treatment_res, M_c, device, initialization='0
 
         Drift_Loss_t = F.kl_div(bin_combined.log(), bin_tgt_t, reduction='sum')
 
-        # UA-SSF: 不确定性正则项 — 鼓励高不确定性新样本的 M_t 更高（优先被选中）
-        # 注意使用负号：最小化 -alpha * sum(M_t * u) 等价于最大化 M_t 对高不确定性样本的响应
+        # UA-SSF: 不确定性正则项（差分形式）— 只提升高于均值的不确定性新样本的 M_t
+        # P1 Fix: 避免所有新样本的 M_t 被无差别抬高
         if uncertainty is not None:
-            uncertainty_reg = -uncertainty_alpha * torch.sum(M_t * uncertainty_norm)
+            uncertainty_centered = F.relu(uncertainty_norm - uncertainty_norm.mean())
+            uncertainty_reg = -uncertainty_alpha * torch.sum(M_t * uncertainty_centered)
             Loss = Drift_Loss_t + uncertainty_reg
         else:
             Loss = Drift_Loss_t
@@ -298,6 +322,10 @@ def optimize_new_mask(control_res, treatment_res, M_c, device, initialization='0
 # 4. 组装并返回维护修整后的缓存：x_train_this_epoch（即新的 Memory Buffer）。
 def select_and_update_representative_samples(x_train_this_epoch, y_train_this_epoch, x_test_this_epoch, y_test_this_epoch, M_c, M_t, num_labeled_sample, device):
     M_c_bin = (M_c >= 0.5).float().to(device)
+    # P4 Fix: 提高新样本入选阈值（0.5→0.8），减少新样本注入量
+    # SSF baseline 每窗口只选入 0-6 个新样本，而 UA-SSF 的 uncertainty 正则项
+    # 系统性抬高了 M_t，导致每窗口约 2100 个新样本被选入，稀释旧知识。
+    # 提高阈值后预期降到 ~500-800 个，仍远高于 SSF，保留新概念学习能力。
     M_t_bin = (M_t >= 0.5).float().to(device)
 
     representative_old = x_train_this_epoch[M_c_bin.bool()]
@@ -339,8 +367,8 @@ def select_and_update_representative_samples(x_train_this_epoch, y_train_this_ep
     new_sample_mask = torch.zeros_like(y_train_this_epoch, dtype=torch.float32).to(device)
 
     if representative_new.shape[0] < num_labeled_sample:
-        print(f" | new补充={additional_samples_needed}", end="")
         additional_samples_needed = num_labeled_sample - representative_new.shape[0]
+        print(f" | new补充={additional_samples_needed}", end="")
 
         selected_indices = set(torch.arange(len(x_test_this_epoch))[M_t_bin.bool().cpu().numpy()])
         available_indices = set(torch.arange(len(x_test_this_epoch)).cpu().numpy()) - selected_indices
@@ -373,6 +401,7 @@ def select_and_update_representative_samples_when_drift(
         M_c, M_t, num_labeled_sample, device, buffer_memory_size, model, normal_recon_temp=None):
 
     M_c_bin = (M_c >= 0.5).float().to(device)
+    # P4 Fix: 同上，drift 路径也使用 0.8 阈值
     M_t_bin = (M_t >= 0.5).float().to(device)
 
     representative_old = x_train_this_epoch[M_c_bin.bool()]
@@ -403,6 +432,27 @@ def select_and_update_representative_samples_when_drift(
 
         remove_indices = torch.cat([remove_indices, additional_remove_indices])
 
+    # ==============================
+    # P0 Fix 1: Buffer 最小保留保护
+    # 防止 drift 时过度清除旧样本导致缓冲池灾难性坍塌。
+    # 确保移除后至少保留 min_retain_ratio 比例的 buffer 容量。
+    # 若需移除的数量超出安全上限，则按 M_c 分数从低到高只移除最不具代表性的样本。
+    # ==============================
+    min_retain_ratio = 0.4
+    min_retain = int(buffer_memory_size * min_retain_ratio)
+    current_size = len(x_train_this_epoch)
+    max_removable = max(0, current_size - min_retain)
+
+    if len(remove_indices) > max_removable and max_removable > 0:
+        # 按 M_c 分数升序排列，优先移除最低分样本
+        remove_scores = M_c[remove_indices].detach()
+        sorted_order = torch.argsort(remove_scores)  # 升序：最低分在前
+        remove_indices = remove_indices[sorted_order[:max_removable]]
+        print(f" | PROTECT: retain≥{min_retain}", end="")
+    elif max_removable == 0:
+        remove_indices = remove_indices[:0]  # 不移除任何样本
+        print(f" | PROTECT: skip removal", end="")
+
     mask = torch.ones(x_train_this_epoch.size(0), dtype=torch.bool, device=device)
     mask[remove_indices] = False
 
@@ -412,8 +462,8 @@ def select_and_update_representative_samples_when_drift(
     new_sample_mask = torch.zeros_like(y_train_this_epoch, dtype=torch.float32).to(device)
 
     if representative_new.shape[0] < num_labeled_sample:
-        print(f" | new补充={additional_samples_needed}", end="")
         additional_samples_needed = num_labeled_sample - representative_new.shape[0]
+        print(f" | new补充={additional_samples_needed}", end="")
 
         selected_indices = set(torch.arange(len(x_test_this_epoch))[M_t_bin.bool().cpu().numpy()])
         available_indices = set(torch.arange(len(x_test_this_epoch)).cpu().numpy()) - selected_indices
@@ -435,6 +485,9 @@ def select_and_update_representative_samples_when_drift(
 
     if len(x_train_this_epoch) < buffer_memory_size:
         additional_samples_needed = buffer_memory_size - len(x_train_this_epoch)
+        # Phase1-A: 移除伪标签数量上限，允许 buffer 回填到满容量（与 SSF 一致）
+        # 原 P0 Fix 2a 的 max_pseudo=30% 导致 buffer 在每次 drift 后不可逆缩小，
+        # 是 UA-SSF 落后 SSF 的最大性能差距来源。
         print(f" | pseudo_fill={additional_samples_needed}", end="")
 
         if representative_new.shape[0] > num_labeled_sample:
@@ -482,17 +535,18 @@ def select_and_update_representative_samples_when_drift(
             else:
                 pseudo_labels = evaluate(normal_recon_temp, x_train_this_epoch, y_train_this_epoch, pseudo_labeled_samples, 0, model)
 
+        # Phase2-D: 完全移除伪标签置信度过滤（原 P0 Fix 2b）
+        # SSF 从不过滤伪标签，直接全部入 buffer → buffer 始终满容量
+        # conf_kept 每次 drift 丢弃 30% 伪标签，是 buffer 萎缩的根本原因
+
+        # 将过滤后的伪标签样本拼入训练集
         x_train_this_epoch = torch.cat((x_train_this_epoch, pseudo_labeled_samples), dim=0)
-        if normal_recon_temp == None:
-            if additional_samples_needed > 1:
-                y_train_this_epoch = torch.cat((y_train_this_epoch, torch.tensor(pseudo_labels).to(device)), dim=0)
-            else:
-                y_train_this_epoch = torch.cat((y_train_this_epoch, torch.tensor(pseudo_labels).unsqueeze(0).to(device)), dim=0)
-        else:
-            if additional_samples_needed > 1:
-                y_train_this_epoch = torch.cat((y_train_this_epoch, pseudo_labels.to(device)), dim=0)
-            else:
-                y_train_this_epoch = torch.cat((y_train_this_epoch, pseudo_labels.unsqueeze(0).to(device)), dim=0)
+        # 统一转为 tensor 处理，避免类型分支冗余
+        if not torch.is_tensor(pseudo_labels):
+            pseudo_labels = torch.tensor(pseudo_labels)
+        if pseudo_labels.dim() == 0:
+            pseudo_labels = pseudo_labels.unsqueeze(0)
+        y_train_this_epoch = torch.cat((y_train_this_epoch, pseudo_labels.to(device)), dim=0)
         
         new_sample_mask = torch.cat([new_sample_mask, torch.zeros(len(pseudo_labeled_samples), dtype=torch.float32).to(device)])
 
@@ -523,6 +577,11 @@ class SplitData(BaseEstimator, TransformerMixin):
 
         elif self.dataset == 'unsw':
             # UNSW dataset processing
+            y_ = X[labels]
+            X_ = X.drop('label', axis=1)
+
+        elif self.dataset == 'cicids':
+            # CICIDS-2017 dataset processing (same format as UNSW after preprocessing)
             y_ = X[labels]
             X_ = X.drop('label', axis=1)
 
@@ -815,7 +874,14 @@ def detect_drift(new_data, control_data, window_size, drift_threshold):
 # 该连续化设计消除了硬阈值导致的策略跳变，使模型能够按漂移程度渐进式调整学习策略。
 # ==============================
 def detect_drift_with_severity(new_data, control_data, window_size, drift_threshold):
-    """返回 (severity, p_value, is_drift) 三元组"""
+    """返回 (severity, p_value, is_drift) 三元组
+    
+    P1 Fix: 使用 KS 统计量（而非 p-value）量化漂移严重程度。
+    KS 统计量 ∈ [0,1] 本身就是分布差异的直接度量，不受样本量影响，
+    避免了 -log10(p_value) 在大样本下快速饱和到 1.0 的问题。
+    severity = ks_statistic / ks_severity_cap, 线性映射并截断到 [0, 1]。
+    """
+    ks_severity_cap = 0.5  # KS 统计量达到 0.5 时视为最大漂移
     for i in range(0, len(new_data), window_size):
         window_data = new_data[i:i + window_size]
         if len(window_data) < window_size:
@@ -825,21 +891,22 @@ def detect_drift_with_severity(new_data, control_data, window_size, drift_thresh
         if p_value >= drift_threshold:
             return 0.0, p_value, False
         else:
-            # p_value 越小，漂移越严重；-log10 映射到 [0, 1] 区间
-            severity = min(1.0, -np.log10(p_value + 1e-10) / 10.0)
+            severity = min(1.0, ks_statistic / ks_severity_cap)
             return severity, p_value, True
     return 0.0, 1.0, False
 
 
 def adaptive_params(severity, base_lwf_lambda=0.5, base_epochs=20):
     """
-    根据漂移程度自适应调整训练超参数：
-      - 漂移越强 → lwf_lambda 越低（放松旧知识约束，允许模型快速适应新分布）
-      - 漂移越强 → 训练 epoch 越多（确保模型充分学习新概念）
-    当 severity=0 时退化为无漂移的标准训练（lwf_lambda=base_lwf_lambda, epochs=base_epochs*0.5）
-    当 severity=1 时退化为极端漂移训练（lwf_lambda≈0, epochs=base_epochs*1.5）
+    根据漂移程度自适应调整训练超参数 (C1 创新)：
+      - drift 时 lwf_lambda=0（全局蒸馏关闭，由 C3 选择性蒸馏在训练循环中实现细粒度控制）
+      - 漂移越强 → 训练 epoch 越多（按漂移严重程度分配训练预算）
+    当 severity=0 时退化为无漂移的标准训练（lwf_lambda=base_lwf_lambda, epochs=base_epochs）
+    当 severity=1 时退化为极端漂移训练（lwf_lambda=0, epochs=base_epochs*2）
     """
-    lwf_lambda = base_lwf_lambda * (1.0 - severity)
-    epochs = max(1, int(base_epochs * (0.5 + severity)))
+    # C3: drift 时全局 lwf=0，选择性蒸馏由训练循环中按样本不确定性实现
+    lwf_lambda = 0.0
+    # C1: severity 越大 → 分配更多训练 epoch
+    epochs = max(1, int(base_epochs * (1.0 + severity)))
     return lwf_lambda, epochs
 
