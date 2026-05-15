@@ -7,12 +7,14 @@ import torch.nn.functional as F
 from torch.utils.data import TensorDataset
 from sklearn.model_selection import train_test_split
 from utils import *
+from runtime_config import resolve_torch_device
 
 import argparse
 import warnings
 import sys
 import os
 import datetime
+import json
 
 warnings.filterwarnings('ignore')
 
@@ -65,6 +67,20 @@ parser.add_argument("--uncertainty_alpha", type=float, default=0.1,
                     help="Uncertainty regularization weight (deprecated, kept for compatibility)")
 parser.add_argument("--uncertainty_beta", type=float, default=0.15,
                     help="Uncertainty-weighted training loss strength (C2 innovation)")
+parser.add_argument("--seed", type=int, default=5011,
+                    help="First random seed used for repeated runs")
+parser.add_argument("--seed_round", type=int, default=5,
+                    help="Number of consecutive seeds to run")
+parser.add_argument("--data_manifest", type=str, default="CICIDS-2017/CICIDSManifest.json",
+                    help="Path to preprocessing manifest for CICIDS reproducibility logs")
+parser.add_argument("--ablation_name", type=str, default=None,
+                    help="Optional experiment label written to logs")
+parser.add_argument("--disable_uncertainty_weight", action="store_true",
+                    help="Disable C2 uncertainty-weighted training loss")
+parser.add_argument("--disable_selective_distillation", action="store_true",
+                    help="Disable C3 uncertainty-guided selective distillation during drift")
+parser.add_argument("--disable_adaptive_drift", action="store_true",
+                    help="Disable C1 adaptive drift severity response and use SSF-style binary response")
 
 
 args = parser.parse_args()
@@ -79,13 +95,31 @@ opt_new_lr = args.opt_new_lr
 opt_old_lr = args.opt_old_lr
 new_sample_weight = args.new_sample_weight
 mode = args.mode
+disable_uncertainty_weight = args.disable_uncertainty_weight
+disable_selective_distillation = args.disable_selective_distillation
+disable_adaptive_drift = args.disable_adaptive_drift
+
+if args.ablation_name:
+    ablation_name = args.ablation_name
+elif mode != 'ua-ssf':
+    ablation_name = f"{mode.upper()}-{dataset.upper()}"
+else:
+    disabled_modules = []
+    if disable_uncertainty_weight:
+        disabled_modules.append("noUW")
+    if disable_selective_distillation:
+        disabled_modules.append("noSD")
+    if disable_adaptive_drift:
+        disabled_modules.append("noADR")
+    ablation_name = "UA-SSF" if not disabled_modules else "UA-" + "-".join(disabled_modules)
 
 # 初始化日志记录器，将输出同时保存到终端和md文档中
 log_dir = "ssf运行日志"
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-log_filename = os.path.join(log_dir, f"{mode}_{dataset}_{timestamp}.md")
+safe_ablation_name = ablation_name.replace("/", "-").replace(" ", "_")
+log_filename = os.path.join(log_dir, f"{mode}_{dataset}_{safe_ablation_name}_{timestamp}.md")
 sys.stdout = Logger(log_filename)
 
 print(f"```bash\npython " + " ".join(sys.argv) + "\n```\n")
@@ -95,8 +129,8 @@ mc_forwards = args.mc_forwards
 uncertainty_alpha = args.uncertainty_alpha
 uncertainty_beta = args.uncertainty_beta
 
-seed = 5011
-seed_round = 5
+seed = args.seed
+seed_round = args.seed_round
 old_init = '0.5-1'
 new_init = '0-0.5'
 lwf_lambda = 0.5
@@ -120,6 +154,23 @@ else:
 if dataset == 'cicids' and epochs == 4:
     epochs = 30
     print(f"[Auto] CICIDS-2017: epochs adjusted to {epochs} for convergence")
+
+print(f"[Experiment] name={ablation_name}")
+print(f"[Config] seed={seed}, seed_round={seed_round}, mode={mode}, dataset={dataset}")
+print(f"[Ablation] disable_uncertainty_weight={disable_uncertainty_weight}, "
+      f"disable_selective_distillation={disable_selective_distillation}, "
+      f"disable_adaptive_drift={disable_adaptive_drift}")
+if dataset == 'cicids':
+    print(f"[Data] manifest={args.data_manifest}")
+    if args.data_manifest and os.path.exists(args.data_manifest):
+        with open(args.data_manifest, "r", encoding="utf-8") as manifest_file:
+            manifest = json.load(manifest_file)
+        print(f"[Data] train_rows={manifest.get('train_rows')} test_rows={manifest.get('test_rows')} "
+              f"feature_count={manifest.get('feature_count')}")
+        print(f"[Data] train_labels={manifest.get('train_binary_label_counts')} "
+              f"test_labels={manifest.get('test_binary_label_counts')}")
+    else:
+        print("[Data] WARN: manifest file not found; run preprocess_cicids2017.py for reproducible CICIDS logs")
 
 
 if dataset == 'nsl':
@@ -145,13 +196,17 @@ elif dataset == 'cicids':
     CICIDSTrain = load_data(CICIDSTrain_dataset_path)
     CICIDSTest  = load_data(CICIDSTest_dataset_path)
 
-    splitter_cicids = SplitData(dataset='cicids')
+    splitter_cicids = SplitData(dataset='cicids', pre_scaled=True)
 
-device = torch.device("cuda:"+cuda_num if torch.cuda.is_available() else "cpu")
+device = torch.device(resolve_torch_device(cuda_num, torch.cuda.is_available()))
 
 criterion = InfoNCELoss(device, tem)
 if dataset != 'nsl':
     classification_criterion = nn.BCELoss(reduction='none')
+
+before_results = []
+after_results = []
+seed_window_summaries = []
 
 for i in range(seed_round):
     # Set the seed for the random number generator for this iteration
@@ -199,15 +254,11 @@ for i in range(seed_round):
     
     num_of_first_train = online_x_train.shape[0]
 
-    # UA-SSF: model initialization based on mode
-    # ua-ssf mode uses Dropout model variants for MC Dropout uncertainty estimation
     if dataset == 'nsl':
-        if mode == 'ua-ssf':
-            model = AE_dropout(input_dim, dropout_rate).to(device)
-            teacher_model = AE_dropout(input_dim, dropout_rate).to(device)
-        else:
-            model = AE(input_dim).to(device)
-            teacher_model = AE(input_dim).to(device)
+        # NSL 的 UA-SSF 保持原始 AE 主干，避免 Dropout 架构扰动 SSF 的强基线。
+        # 不确定性由 estimate_shadow_recon_uncertainty 在估计阶段临时注入。
+        model = AE(input_dim).to(device)
+        teacher_model = AE(input_dim).to(device)
     else:
         if mode == 'ua-ssf':
             model = AE_classifier_dropout(input_dim, dropout_rate).to(device)
@@ -273,6 +324,11 @@ for i in range(seed_round):
     # Concatenating y_test and y_test_left_epoch
     y_test_left_epoch = torch.cat((y_test_left_epoch, y_test), dim=0)
 
+    classifier_threshold = 0.5
+    nsl_attack_threshold = 0.5
+    classifier_threshold_min = 0.50 if dataset == 'unsw' else 0.35
+    classifier_threshold_momentum = 0.65 if dataset == 'unsw' else 0.50
+
     if dataset == 'nsl':
         normal_recon_temp = torch.mean(F.normalize(model(online_x_train[(online_y_train == 0).squeeze()])[1], p=2, dim=1), dim=0)
         y_pred_before_online = evaluate(normal_recon_temp, online_x_train, online_y_train, x_test_left_epoch, 0, model)
@@ -280,10 +336,21 @@ for i in range(seed_round):
         print('[Before CL]')
         performance_before = score_detail(y_test_left_epoch[-x_test.shape[0]:].numpy(), y_pred_before_online[-x_test.shape[0]:].astype("int32"))
     else:
+        if mode == 'ua-ssf':
+            classifier_threshold, threshold_stats = calibrate_classifier_threshold(
+                model, online_x_train, online_y_train, device, batch_size=bs,
+                previous_threshold=classifier_threshold, momentum=0.0,
+                threshold_min=classifier_threshold_min)
+            print(f"[Threshold] init={classifier_threshold:.3f} "
+                  f"calib_f1={threshold_stats['f1']:.4f} "
+                  f"calib_pre={threshold_stats['precision']:.4f} "
+                  f"calib_rec={threshold_stats['recall']:.4f}")
         print('[Before CL]')
         test_ds = TensorDataset(x_test, y_test)  # Replace with your test data
         test_loader = DataLoader(dataset=test_ds, batch_size=bs, shuffle=False)
-        performance_before = evaluate_classifier(model, test_loader, device)
+        performance_before = evaluate_classifier(model, test_loader, device, threshold=classifier_threshold)
+
+    before_results.append((current_seed, performance_before))
 
 ####################### start online training #######################
     # 开始在线/持续学习阶段，模拟流式数据到达的过程
@@ -312,6 +379,10 @@ for i in range(seed_round):
     # 打断 drift → buffer 退化 → 更多 drift 的自激反馈循环。
     drift_cooldown = 0  # 剩余冷却窗口数
     cooldown_windows = 0  # Phase1-B: 完全取消冷却期，允许连续 drift 响应（与 SSF 一致）
+    drift_windows = 0
+    stable_windows = 0
+    severity_values = []
+    buffer_sizes = []
 
     while start_idx < len(x_test_left_epoch):
         count += 1
@@ -323,6 +394,8 @@ for i in range(seed_round):
         model = model.to(device)
 
         start_idx += sample_interval
+        nsl_c3_gate = 1.0
+        nsl_c3_log = ""
 
         if dataset == 'nsl':
             # must compute the normal_temp and normal_recon_temp again, because the model has been updated
@@ -335,14 +408,30 @@ for i in range(seed_round):
             pdf11_probe = pdf11 / (pdf11 + pdf22)
 
             if mode == 'ua-ssf':
-                severity, p_val, drift = detect_drift_with_severity(
-                    pdf11_probe, pdf1_probe, sample_interval, drift_threshold)
-                if drift:
-                    adaptive_lwf, adaptive_epoch_1 = adaptive_params(
-                        severity, base_lwf_lambda, epoch_1)
-                else:
-                    adaptive_lwf = base_lwf_lambda
+                train_attack_rate = (pdf1_probe < 0.5).float().mean().item()
+                window_attack_rate = (pdf11_probe < 0.5).float().mean().item()
+                fp_risk = max(0.0, window_attack_rate - train_attack_rate)
+                fp_gate = min(1.0, max(0.0, (fp_risk - 0.02) / 0.08))
+                if disable_adaptive_drift:
+                    drift = detect_drift(pdf11_probe, pdf1_probe, sample_interval, drift_threshold)
+                    severity = 1.0 if drift else 0.0
+                    p_val = 0.0 if drift else 1.0
+                    nsl_c3_gate = 1.0
+                    nsl_c3_log = " gate=1.00 noADR"
+                    adaptive_lwf = 0.0 if drift else base_lwf_lambda
                     adaptive_epoch_1 = epoch_1
+                else:
+                    severity, p_val, drift = detect_drift_with_severity(
+                        pdf11_probe, pdf1_probe, sample_interval, drift_threshold)
+                    severity_gate = min(1.0, max(0.0, (severity - 0.08) / 0.07))
+                    nsl_c3_gate = max(fp_gate, severity_gate)
+                    nsl_c3_log = f" gate={nsl_c3_gate:.2f}"
+                    if drift:
+                        adaptive_lwf, adaptive_epoch_1 = adaptive_params(
+                            severity, base_lwf_lambda, epoch_1)
+                    else:
+                        adaptive_lwf = base_lwf_lambda
+                        adaptive_epoch_1 = epoch_1
             else:
                 drift = detect_drift(pdf11_probe, pdf1_probe, sample_interval, drift_threshold)
                 severity = 1.0 if drift else 0.0
@@ -363,16 +452,23 @@ for i in range(seed_round):
             
             # UA-SSF: 使用漂移严重程度量化替代二元检测
             if mode == 'ua-ssf':
-                severity, p_val, drift = detect_drift_with_severity(
-                    test_logits, train_logits, sample_interval, drift_threshold)
-                if drift:
-                    # Drift: C3 选择性蒸馏（adaptive_params 返回 lwf=0，C3 在训练循环中实现细粒度蒸馏）
-                    adaptive_lwf, adaptive_epoch_1 = adaptive_params(
-                        severity, base_lwf_lambda, epoch_1)
-                else:
-                    # Stable: 全局蒸馏保护旧知识（与 SSF 一致）
-                    adaptive_lwf = base_lwf_lambda
+                if disable_adaptive_drift:
+                    drift = detect_drift(test_logits, train_logits, sample_interval, drift_threshold)
+                    severity = 1.0 if drift else 0.0
+                    p_val = 0.0 if drift else 1.0
+                    adaptive_lwf = 0.0 if drift else base_lwf_lambda
                     adaptive_epoch_1 = epoch_1
+                else:
+                    severity, p_val, drift = detect_drift_with_severity(
+                        test_logits, train_logits, sample_interval, drift_threshold)
+                    if drift:
+                        # Drift: C3 选择性蒸馏（adaptive_params 返回 lwf=0，C3 在训练循环中实现细粒度蒸馏）
+                        adaptive_lwf, adaptive_epoch_1 = adaptive_params(
+                            severity, base_lwf_lambda, epoch_1)
+                    else:
+                        # Stable: 全局蒸馏保护旧知识（与 SSF 一致）
+                        adaptive_lwf = base_lwf_lambda
+                        adaptive_epoch_1 = epoch_1
             else:
                 drift = detect_drift(test_logits, train_logits, sample_interval, drift_threshold)
                 severity = 1.0 if drift else 0.0
@@ -382,16 +478,9 @@ for i in range(seed_round):
             control_res = train_logits.cpu().numpy()
             treatment_res = test_logits.cpu().numpy()
 
-        # UA-SSF: estimate uncertainty (保留用于未来训练权重等用途，但不再注入 mask 优化)
-        # 方案 A 验证：移除 uncertainty 对 M_c/M_t 的干预，
-        # 使样本选择完全由 KL 散度驱动（与 SSF 一致），
-        # 仅保留 severity 连续化、冷却期、MINOR 过滤等改进作为 novelty。
-        if mode == 'ua-ssf':
-            uncertainty_old = estimate_uncertainty(model, x_train_this_epoch, mc_forwards, mc_dropout_rate=dropout_rate)
-            uncertainty_new = estimate_uncertainty(model, x_test_this_epoch, mc_forwards, mc_dropout_rate=dropout_rate)
-        else:
-            uncertainty_old = None
-            uncertainty_new = None
+        # UA-SSF 的 mask 选择保持 SSF 的 KL 驱动路径，避免不确定性直接扰动 buffer 组成。
+        uncertainty_old = None
+        uncertainty_new = None
 
         M_c = optimize_old_mask(control_res, treatment_res, device, initialization=old_init, lr=opt_old_lr,
                                 uncertainty=None, uncertainty_alpha=uncertainty_alpha)
@@ -405,7 +494,7 @@ for i in range(seed_round):
         # 防止 KS 统计量极小（如 0.015）但 p-value 刚好低于阈值时
         # 不必要地触发 buffer 清除。
         # ==============================
-        if mode == 'ua-ssf' and drift and severity < 0.05:  # Phase2-E: 降低 MINOR 阈值，释放累积性漂移
+        if mode == 'ua-ssf' and not disable_adaptive_drift and drift and severity < 0.05:  # Phase2-E: 降低 MINOR 阈值，释放累积性漂移
             drift = False
             adaptive_lwf = base_lwf_lambda  # MINOR 按 stable 处理，保持全局蒸馏
             adaptive_epoch_1 = epoch_1
@@ -418,12 +507,18 @@ for i in range(seed_round):
         # 冷却期使用 adaptive_params(0.0) 而非 epoch_1，确保 epoch 与正常 stable 一致
         # （UNSW: 90 epoch 而非 180 epoch）。
         # ==============================
-        if mode == 'ua-ssf' and drift and drift_cooldown > 0:
+        if mode == 'ua-ssf' and not disable_adaptive_drift and drift and drift_cooldown > 0:
             drift = False
             severity = 0.0
             adaptive_lwf = base_lwf_lambda  # COOLDOWN 按 stable 处理，保持全局蒸馏
             adaptive_epoch_1 = epoch_1
             print(f"  [COOLDOWN:{drift_cooldown}]", end="")
+
+        if drift:
+            drift_windows += 1
+        else:
+            stable_windows += 1
+        severity_values.append(float(severity))
 
         # 判断并应用样本更新与遗忘策略
         if drift:
@@ -432,11 +527,13 @@ for i in range(seed_round):
             # 还会强行为额外的新样本打上伪标签（Pseudo-label）放入缓冲池，尽快适应新的概念分布。
             if dataset == 'nsl':
                 x_train_this_epoch, y_train_this_epoch, labeled_indices_current, new_mask = select_and_update_representative_samples_when_drift(
-                    x_train_this_epoch, y_train_this_epoch, x_test_this_epoch, y_test_this_epoch, M_c, M_t, num_labeled_sample, device, memory, model, normal_recon_temp
+                    x_train_this_epoch, y_train_this_epoch, x_test_this_epoch, y_test_this_epoch,
+                    M_c, M_t, num_labeled_sample, device, memory, model, normal_recon_temp
                 )
             else:
                 x_train_this_epoch, y_train_this_epoch, labeled_indices_current, new_mask = select_and_update_representative_samples_when_drift(
-                    x_train_this_epoch, y_train_this_epoch, x_test_this_epoch, y_test_this_epoch, M_c, M_t, num_labeled_sample, device, memory, model
+                    x_train_this_epoch, y_train_this_epoch, x_test_this_epoch, y_test_this_epoch, M_c, M_t, num_labeled_sample, device, memory, model,
+                    classifier_threshold=classifier_threshold
                 )
             # 触发 drift 后重置冷却期
             if mode == 'ua-ssf':
@@ -460,16 +557,26 @@ for i in range(seed_round):
         #   - 样本选择仍由 KL 散度（M_c/M_t）驱动（性能安全）
         #   - uncertainty 仅影响学习优先级（训练权重），不改变 buffer 组成
         # ==============================
-        if mode == 'ua-ssf':
-            uncertainty_weights = estimate_uncertainty(model, x_train_this_epoch, mc_forwards, mc_dropout_rate=dropout_rate)
+        if mode == 'ua-ssf' and drift and (not disable_uncertainty_weight or not disable_selective_distillation):
+            if dataset == 'nsl':
+                raw_uncertainty = estimate_shadow_recon_uncertainty(
+                    model, x_train_this_epoch, mc_forwards, dropout_rate=dropout_rate)
+            else:
+                raw_uncertainty = estimate_hybrid_uncertainty(
+                    model, x_train_this_epoch, mc_forwards, mc_dropout_rate=dropout_rate)
             # 归一化到 [0, 1]，然后映射为训练权重: w = 1 + beta * u_norm
-            u_max = uncertainty_weights.max() + 1e-8
-            uncertainty_weights = 1.0 + uncertainty_beta * (uncertainty_weights / u_max)
+            u_max = raw_uncertainty.max() + 1e-8
+            uncertainty_norm = raw_uncertainty / u_max
+            if disable_uncertainty_weight:
+                uncertainty_weights = torch.ones(len(x_train_this_epoch), device=device)
+            else:
+                uncertainty_weights = 1.0 + uncertainty_beta * uncertainty_norm
         else:
             uncertainty_weights = torch.ones(len(x_train_this_epoch), device=device)
+            uncertainty_norm = torch.zeros(len(x_train_this_epoch), device=device)
 
         # 使用更新后的缓存池数据针对当前模型进行在线再训练 (Re-training model)
-        train_ds = TensorDataset(x_train_this_epoch, y_train_this_epoch, new_mask, uncertainty_weights)
+        train_ds = TensorDataset(x_train_this_epoch, y_train_this_epoch, new_mask, uncertainty_weights, uncertainty_norm)
         train_loader = torch.utils.data.DataLoader(dataset=train_ds, batch_size=bs, shuffle=True)
         
         model = model.to(device)
@@ -486,18 +593,19 @@ for i in range(seed_round):
         # 窗口摘要日志：一行输出关键信息
         if mode == 'ua-ssf':
             drift_str = f"DRIFT(sev={severity:.2f})" if drift else f"stable(p={p_val:.4f})"
-            print(f"[W{count-1:02d}] {drift_str} | lwf={adaptive_lwf:.2f} ep={adaptive_epoch_1}", end="")
+            print(f"[W{count-1:02d}] {drift_str} | lwf={adaptive_lwf:.2f} ep={adaptive_epoch_1}{nsl_c3_log}", end="")
         else:
             drift_str = "DRIFT" if drift else "stable"
             print(f"[W{count-1:02d}] {drift_str} | lwf={adaptive_lwf:.2f} ep={adaptive_epoch_1}", end="")
         
         for epoch in range(adaptive_epoch_1):
             for j, data in enumerate(train_loader, 0):
-                inputs, labels, new_sample_mask, u_weights = data
+                inputs, labels, new_sample_mask, u_weights, u_norm = data
                 inputs = inputs.to(device)
                 labels = labels.to(device)
                 new_sample_mask = new_sample_mask.to(device)
                 u_weights = u_weights.to(device)
+                u_norm = u_norm.to(device)
                 normal_new_mask = new_sample_mask[labels == 0]
                 
                 optimizer.zero_grad()
@@ -533,6 +641,15 @@ for i in range(seed_round):
                     else:
                         weighted_loss = weighted_con_loss.mean() + weighted_classification_loss.mean()
 
+                if dataset == 'nsl' and mode == 'ua-ssf' and drift:
+                    true_new_attack_mask = (new_sample_mask > 0.5) & (labels == 1)
+                    if true_new_attack_mask.any():
+                        normal_recon_ref = F.normalize(normal_recon_temp.detach().to(device), p=2, dim=0).reshape(1, -1)
+                        attack_recon = F.normalize(recon_vec[true_new_attack_mask], p=2, dim=1)
+                        sim_attack = F.cosine_similarity(attack_recon, normal_recon_ref, dim=1)
+                        attack_margin_loss = F.relu(sim_attack - 0.45).mean()
+                        weighted_loss = weighted_loss + 0.05 * severity * attack_margin_loss
+
                 # ==============================
                 # C3 创新：Uncertainty-Guided Selective Distillation
                 # Drift 时按样本不确定性选择性蒸馏（替代 SSF 的全局 lwf=0）：
@@ -542,7 +659,7 @@ for i in range(seed_round):
                 # UA-SSF C3: 选择性保留旧知识 + 释放新学习 → 有机会超越 SSF
                 # Stable 窗口保持与 SSF 一致的全局蒸馏（adaptive_lwf=0.5）
                 # ==============================
-                if mode == 'ua-ssf' and drift:
+                if mode == 'ua-ssf' and drift and not disable_selective_distillation:
                     if dataset == 'nsl':
                         with torch.no_grad():
                             teacher_features, teacher_recon_vec = teacher_model(inputs)
@@ -552,13 +669,17 @@ for i in range(seed_round):
                             teacher_features, teacher_recon_vec, teacher_logits = teacher_model(inputs)
                         per_sample_distill = F.mse_loss(classifications, teacher_logits, reduction='none').squeeze(-1)
                     
-                    # 从 u_weights 反推归一化不确定性: u_weights = 1 + beta * u_norm
-                    u_norm = ((u_weights - 1.0) / (uncertainty_beta + 1e-8)).clamp(0, 1)
-                    distill_w = 1.0 - u_norm  # confident(u_norm≈0) → 1, uncertain(u_norm≈1) → 0
+                    distill_w = 1.0 - u_norm.clamp(0, 1)  # confident(u_norm≈0) → 1, uncertain(u_norm≈1) → 0
                     distillation_loss = (per_sample_distill * distill_w).mean()
-                    # C3: severity 越高 → 遗忘风险越大 → 蒸馏保护越强
-                    c3_coeff = 0.5 * severity
-                    total_loss = weighted_loss + c3_coeff * distillation_loss
+                    # NSL 用更早的 severity gate 释放 C3，但降低系数，避免过强蒸馏压低 Recall。
+                    if ((dataset == 'nsl' and severity >= 0.10 and nsl_c3_gate > 0) or
+                            (dataset != 'nsl' and severity > 0.12)):
+                        c3_gate = nsl_c3_gate if dataset == 'nsl' else 1.0
+                        c3_base = 0.35 if dataset == 'nsl' else 0.5
+                        c3_coeff = c3_base * severity * c3_gate
+                        total_loss = weighted_loss + c3_coeff * distillation_loss
+                    else:
+                        total_loss = weighted_loss
                 elif adaptive_lwf > 1e-6:
                     # Stable 窗口：全局蒸馏（与 SSF 一致）
                     if dataset == 'nsl':
@@ -579,21 +700,39 @@ for i in range(seed_round):
         
         teacher_model.load_state_dict(model.state_dict())  # Update teacher model
 
+        window_threshold_log = ""
         if dataset == 'nsl':
             # normal_temp = torch.mean(F.normalize(model(x_train_this_epoch[(y_train_this_epoch == 0).squeeze()])[0], p=2, dim=1), dim=0)
             normal_recon_temp = torch.mean(F.normalize(model(x_train_this_epoch[(y_train_this_epoch == 0).squeeze()])[1], p=2, dim=1), dim=0)
-            predict_label = evaluate(normal_recon_temp, x_train_this_epoch, y_train_this_epoch, x_test_this_epoch, 0, model)
+            if mode == 'ua-ssf':
+                calib_pdf_normal, calib_pdf_attack, _ = evaluate(
+                    normal_recon_temp, x_train_this_epoch, y_train_this_epoch,
+                    x_train_this_epoch, y_train_this_epoch, model, get_probs=True)
+                nsl_attack_threshold, nsl_thr_stats = calibrate_nsl_attack_threshold(
+                    calib_pdf_normal, calib_pdf_attack, y_train_this_epoch,
+                    previous_threshold=nsl_attack_threshold, momentum=0.5)
+                window_threshold_log = f" | athr={nsl_attack_threshold:.3f}"
+            predict_label = evaluate(
+                normal_recon_temp, x_train_this_epoch, y_train_this_epoch,
+                x_test_this_epoch, 0, model, attack_threshold=nsl_attack_threshold)
         else:
+            if mode == 'ua-ssf':
+                classifier_threshold, threshold_stats = calibrate_classifier_threshold(
+                    model, x_train_this_epoch, y_train_this_epoch, device, batch_size=bs,
+                    previous_threshold=classifier_threshold, momentum=classifier_threshold_momentum,
+                    threshold_min=classifier_threshold_min)
+                window_threshold_log = f" | thr={classifier_threshold:.3f}"
             test_ds = TensorDataset(x_test_this_epoch, y_test_this_epoch)  # Replace with your test data
             test_loader = DataLoader(dataset=test_ds, batch_size=bs, shuffle=False)
-            predict_label = evaluate_classifier(model, test_loader, device, get_predict=True)
+            predict_label = evaluate_classifier(model, test_loader, device, get_predict=True, threshold=classifier_threshold)
         
         y_train_detection = torch.cat((y_train_detection.to(device), torch.tensor(predict_label).to(device)))
         
         # 结束窗口日志行（换行）
-        print(f" | buf={len(x_train_this_epoch)}")
+        print(f"{window_threshold_log} | buf={len(x_train_this_epoch)}")
+        buffer_sizes.append(len(x_train_this_epoch))
 
-################### test the performance after online training ###################
+	################### test the performance after online training ###################
 
     test_size = len(x_test)
     total_size = len(x_test_left_epoch)
@@ -614,6 +753,47 @@ for i in range(seed_round):
     
     print('[After CL]')
     performance_test = score_detail(y_test_left_true.cpu().numpy(), y_test_left_pseudo.cpu().numpy())
+    after_results.append((current_seed, performance_test))
+
+    avg_severity = float(np.mean(severity_values)) if severity_values else 0.0
+    avg_buffer = float(np.mean(buffer_sizes)) if buffer_sizes else float(len(x_train_this_epoch))
+    seed_window_summary = {
+        "seed": current_seed,
+        "drift_windows": drift_windows,
+        "stable_windows": stable_windows,
+        "avg_severity": avg_severity,
+        "avg_buffer": avg_buffer,
+    }
+    seed_window_summaries.append(seed_window_summary)
+    print(f"[Seed Summary] before_f1={performance_before[3]:.4f} after_f1={performance_test[3]:.4f} "
+          f"drift_windows={drift_windows} stable_windows={stable_windows} "
+          f"avg_severity={avg_severity:.4f} avg_buffer={avg_buffer:.1f}")
 
 
+def print_metric_summary(title, results):
+    if not results:
+        return
+    metric_names = ["Acc", "Pre", "Rec", "F1"]
+    values = np.array([item[1] for item in results], dtype=float)
+    print(f"\n[Summary] {title}")
+    for idx, metric_name in enumerate(metric_names):
+        mean_value = values[:, idx].mean()
+        std_value = values[:, idx].std(ddof=1) if len(values) > 1 else 0.0
+        print(f"  {metric_name}: mean={mean_value:.4f} std={std_value:.4f}")
+    f1_values = values[:, 3]
+    best_idx = int(np.argmax(f1_values))
+    worst_idx = int(np.argmin(f1_values))
+    print(f"  Best F1: seed={results[best_idx][0]} f1={f1_values[best_idx]:.4f}")
+    print(f"  Worst F1: seed={results[worst_idx][0]} f1={f1_values[worst_idx]:.4f}")
 
+
+print_metric_summary("Before CL", before_results)
+print_metric_summary("After CL", after_results)
+if seed_window_summaries:
+    drift_counts = np.array([item["drift_windows"] for item in seed_window_summaries], dtype=float)
+    severities = np.array([item["avg_severity"] for item in seed_window_summaries], dtype=float)
+    buffers = np.array([item["avg_buffer"] for item in seed_window_summaries], dtype=float)
+    print("\n[Summary] Window behavior")
+    print(f"  Drift windows: mean={drift_counts.mean():.2f} std={drift_counts.std(ddof=1) if len(drift_counts) > 1 else 0.0:.2f}")
+    print(f"  Avg severity: mean={severities.mean():.4f} std={severities.std(ddof=1) if len(severities) > 1 else 0.0:.4f}")
+    print(f"  Avg buffer: mean={buffers.mean():.1f} std={buffers.std(ddof=1) if len(buffers) > 1 else 0.0:.1f}")

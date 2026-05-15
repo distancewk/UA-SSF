@@ -100,7 +100,7 @@ class AE_classifier_dropout(nn.Module):
         return encode, decode, classify
 
 # Evaluation function for unsw
-def evaluate_classifier(model, data_loader, device, get_predict=False):
+def evaluate_classifier(model, data_loader, device, get_predict=False, threshold=0.5):
     model.eval()
     all_labels = []
     all_preds = []
@@ -111,7 +111,7 @@ def evaluate_classifier(model, data_loader, device, get_predict=False):
             inputs, labels = inputs.to(device), labels.to(device)
 
             _, _, classifications = model(inputs)
-            preds = (classifications.squeeze(-1) > 0.5).float()
+            preds = (classifications.squeeze(-1) > threshold).float()
 
             all_labels.extend(labels.cpu().numpy())
             all_preds.extend(preds.cpu().numpy())
@@ -125,13 +125,181 @@ def evaluate_classifier(model, data_loader, device, get_predict=False):
         return res
 
 # Evaluation function for single sample or batch of samples for unsw
-def evaluate_inputs(model, inputs, device):
+def evaluate_inputs(model, inputs, device, threshold=0.5):
     model.eval()
     with torch.no_grad():
         inputs = inputs.to(device)
         _, _, classifications = model(inputs)
-        preds = (classifications.squeeze(-1) > 0.5).float()
+        preds = (classifications.squeeze(-1) > threshold).float()
     return preds.cpu().numpy()
+
+
+def predict_classifier_probs(model, inputs, device, batch_size=512):
+    was_training = model.training
+    model.eval()
+    probs = []
+    with torch.no_grad():
+        for start in range(0, len(inputs), batch_size):
+            batch = inputs[start:start + batch_size].to(device)
+            _, _, classifications = model(batch)
+            probs.append(classifications.squeeze(-1).detach().cpu())
+    if was_training:
+        model.train()
+    return torch.cat(probs)
+
+
+def _normalize_uncertainty(values):
+    values = values - values.min()
+    denom = values.max() + 1e-8
+    return values / denom
+
+
+def _binary_entropy(prob):
+    prob = prob.clamp(1e-6, 1.0 - 1e-6)
+    return -(prob * prob.log() + (1.0 - prob) * (1.0 - prob).log())
+
+
+def estimate_hybrid_uncertainty(model, x, n_forward=10, batch_size=512, mc_dropout_rate=None,
+                                recon_weight=0.35, cls_weight=0.65):
+    """分类数据集专用：融合重构 MC 方差与分类不确定性，返回 shape=(N,) 的权重信号。"""
+    was_training = model.training
+
+    original_rates = []
+    if mc_dropout_rate is not None:
+        for m in model.modules():
+            if isinstance(m, nn.Dropout):
+                original_rates.append(m.p)
+                m.p = mc_dropout_rate
+
+    model.train()
+    recon_uncertainties = []
+    class_uncertainties = []
+
+    for start in range(0, len(x), batch_size):
+        batch = x[start:start + batch_size].to(next(model.parameters()).device)
+        recon_predictions = []
+        class_predictions = []
+        for _ in range(n_forward):
+            with torch.no_grad():
+                output = model(batch)
+                recon_predictions.append(output[1])
+                class_predictions.append(output[2].squeeze(-1))
+
+        recon_predictions = torch.stack(recon_predictions)
+        class_predictions = torch.stack(class_predictions)
+
+        recon_std = recon_predictions.std(dim=0, unbiased=False).mean(dim=1)
+        mean_prob = class_predictions.mean(dim=0)
+        predictive_entropy = _binary_entropy(mean_prob)
+        expected_entropy = _binary_entropy(class_predictions).mean(dim=0)
+        bald = (predictive_entropy - expected_entropy).clamp(min=0.0)
+        class_std = class_predictions.std(dim=0, unbiased=False)
+        class_uncertainty = predictive_entropy + bald + class_std
+
+        recon_uncertainties.append(recon_std)
+        class_uncertainties.append(class_uncertainty)
+
+    if mc_dropout_rate is not None:
+        idx = 0
+        for m in model.modules():
+            if isinstance(m, nn.Dropout):
+                m.p = original_rates[idx]
+                idx += 1
+
+    if not was_training:
+        model.eval()
+
+    recon_uncertainty = _normalize_uncertainty(torch.cat(recon_uncertainties))
+    class_uncertainty = _normalize_uncertainty(torch.cat(class_uncertainties))
+    return recon_weight * recon_uncertainty + cls_weight * class_uncertainty
+
+
+def calibrate_classifier_threshold(model, x_ref, y_ref, device, batch_size=512,
+                                   previous_threshold=0.5, momentum=0.5,
+                                   threshold_min=0.35, threshold_max=0.75):
+    """在当前缓存池上选择分类阈值；优先保持接近最佳 F1，同时偏向更高 Precision。"""
+    probs = predict_classifier_probs(model, x_ref, device, batch_size=batch_size).numpy()
+    labels = y_ref.detach().cpu().numpy().astype(int).reshape(-1)
+    thresholds = np.linspace(threshold_min, threshold_max, 81)
+
+    metrics = []
+    for threshold in thresholds:
+        preds = (probs > threshold).astype(int)
+        tp = np.sum((preds == 1) & (labels == 1))
+        fp = np.sum((preds == 1) & (labels == 0))
+        fn = np.sum((preds == 0) & (labels == 1))
+        tn = np.sum((preds == 0) & (labels == 0))
+        precision = tp / (tp + fp + 1e-8)
+        recall = tp / (tp + fn + 1e-8)
+        f1 = 2 * precision * recall / (precision + recall + 1e-8)
+        acc = (tp + tn) / (tp + fp + fn + tn + 1e-8)
+        metrics.append({
+            "threshold": float(threshold),
+            "acc": float(acc),
+            "precision": float(precision),
+            "recall": float(recall),
+            "f1": float(f1),
+        })
+
+    base_metric = min(metrics, key=lambda item: abs(item["threshold"] - 0.5))
+    best_f1 = max(item["f1"] for item in metrics)
+    near_best = [item for item in metrics if item["f1"] >= best_f1 - 0.002]
+    precision_safe = [item for item in near_best if item["precision"] >= base_metric["precision"]]
+    candidates = precision_safe if precision_safe else near_best
+    selected = max(candidates, key=lambda item: (item["precision"], item["f1"], item["recall"]))
+
+    threshold = selected["threshold"]
+    if previous_threshold is not None:
+        threshold = momentum * previous_threshold + (1.0 - momentum) * threshold
+    threshold = float(np.clip(threshold, thresholds.min(), thresholds.max()))
+    selected = dict(selected)
+    selected["threshold"] = threshold
+    return threshold, selected
+
+
+def attack_posterior(pdf_normal, pdf_attack):
+    return pdf_attack / (pdf_normal + pdf_attack + 1e-8)
+
+
+def calibrate_nsl_attack_threshold(pdf_normal, pdf_attack, labels, previous_threshold=0.5,
+                                   momentum=0.5, threshold_min=0.35, threshold_max=0.60):
+    """NSL 专用：在当前 buffer 上选择偏 Recall 的攻击后验阈值。"""
+    probs = attack_posterior(pdf_normal, pdf_attack).detach().cpu().numpy()
+    if torch.is_tensor(labels):
+        labels = labels.detach().cpu().numpy()
+    labels = np.asarray(labels).astype(int).reshape(-1)
+    thresholds = np.linspace(threshold_min, threshold_max, 51)
+
+    metrics = []
+    for threshold in thresholds:
+        preds = (probs > threshold).astype(int)
+        tp = np.sum((preds == 1) & (labels == 1))
+        fp = np.sum((preds == 1) & (labels == 0))
+        fn = np.sum((preds == 0) & (labels == 1))
+        tn = np.sum((preds == 0) & (labels == 0))
+        precision = tp / (tp + fp + 1e-8)
+        recall = tp / (tp + fn + 1e-8)
+        f1 = 2 * precision * recall / (precision + recall + 1e-8)
+        acc = (tp + tn) / (tp + fp + fn + tn + 1e-8)
+        metrics.append({
+            "threshold": float(threshold),
+            "acc": float(acc),
+            "precision": float(precision),
+            "recall": float(recall),
+            "f1": float(f1),
+        })
+
+    best_f1 = max(item["f1"] for item in metrics)
+    near_best = [item for item in metrics if item["f1"] >= best_f1 - 0.002]
+    selected = max(near_best, key=lambda item: (item["recall"], item["f1"], item["precision"]))
+
+    threshold = selected["threshold"]
+    if previous_threshold is not None:
+        threshold = momentum * previous_threshold + (1.0 - momentum) * threshold
+    threshold = float(np.clip(threshold, threshold_min, threshold_max))
+    selected = dict(selected)
+    selected["threshold"] = threshold
+    return threshold, selected
 
 def initialize_tensor(size, initialization, device):
     if initialization == '0-1':
@@ -192,6 +360,49 @@ def estimate_uncertainty(model, x, n_forward=10, batch_size=512, mc_dropout_rate
     
     if not was_training:
         model.eval()
+    return torch.cat(all_uncertainties)
+
+
+def _forward_recon_with_shadow_dropout(model, x, dropout_rate):
+    z = x
+    for layer in model.encoder:
+        if isinstance(layer, nn.Dropout):
+            continue
+        z = layer(z)
+        if isinstance(layer, nn.ReLU) and dropout_rate > 0:
+            z = F.dropout(z, p=dropout_rate, training=True)
+
+    encode = z
+    z = encode
+    for layer in model.decoder:
+        if isinstance(layer, nn.Dropout):
+            continue
+        z = layer(z)
+        if isinstance(layer, nn.ReLU) and dropout_rate > 0:
+            z = F.dropout(z, p=dropout_rate, training=True)
+    return encode, z
+
+
+def estimate_shadow_recon_uncertainty(model, x, n_forward=10, batch_size=512, dropout_rate=0.1):
+    """NSL 专用：主模型保持原始 AE 结构，仅在不确定性估计时做影子 dropout。"""
+    was_training = model.training
+    model.eval()
+    device = next(model.parameters()).device
+
+    all_uncertainties = []
+    for start in range(0, len(x), batch_size):
+        batch = x[start:start + batch_size].to(device)
+        predictions = []
+        for _ in range(n_forward):
+            with torch.no_grad():
+                _, recon = _forward_recon_with_shadow_dropout(model, batch, dropout_rate)
+                predictions.append(recon)
+        predictions = torch.stack(predictions)
+        uncertainty = predictions.std(dim=0, unbiased=False).mean(dim=1)
+        all_uncertainties.append(uncertainty)
+
+    if was_training:
+        model.train()
     return torch.cat(all_uncertainties)
 
 # ==============================
@@ -398,7 +609,8 @@ def select_and_update_representative_samples(x_train_this_epoch, y_train_this_ep
 #    强行塞入缓冲池，以此最大程度扩张针对崭新概念的数据阵列。
 def select_and_update_representative_samples_when_drift(
         x_train_this_epoch, y_train_this_epoch, x_test_this_epoch, y_test_this_epoch, 
-        M_c, M_t, num_labeled_sample, device, buffer_memory_size, model, normal_recon_temp=None):
+        M_c, M_t, num_labeled_sample, device, buffer_memory_size, model, normal_recon_temp=None,
+        classifier_threshold=0.5, attack_threshold=0.5):
 
     M_c_bin = (M_c >= 0.5).float().to(device)
     # P4 Fix: 同上，drift 路径也使用 0.8 阈值
@@ -497,24 +709,28 @@ def select_and_update_representative_samples_when_drift(
             if remaining_new_samples.size(0) >= additional_samples_needed:
                 pseudo_labeled_samples = remaining_new_samples[:additional_samples_needed]
                 if normal_recon_temp == None:
-                    pseudo_labels = evaluate_inputs(model, pseudo_labeled_samples, device)
+                    pseudo_labels = evaluate_inputs(model, pseudo_labeled_samples, device, threshold=classifier_threshold)
                 else:
-                    pseudo_labels = evaluate(normal_recon_temp, x_train_this_epoch, y_train_this_epoch, pseudo_labeled_samples, 0, model)
+                    pseudo_labels = evaluate(normal_recon_temp, x_train_this_epoch, y_train_this_epoch,
+                                             pseudo_labeled_samples, 0, model, attack_threshold=attack_threshold)
             else:
                 pseudo_labeled_samples = remaining_new_samples
                 if normal_recon_temp == None:
-                    pseudo_labels = evaluate_inputs(model, pseudo_labeled_samples, device)
+                    pseudo_labels = evaluate_inputs(model, pseudo_labeled_samples, device, threshold=classifier_threshold)
                 else:
-                    pseudo_labels = evaluate(normal_recon_temp, x_train_this_epoch, y_train_this_epoch, pseudo_labeled_samples, 0, model)
+                    pseudo_labels = evaluate(normal_recon_temp, x_train_this_epoch, y_train_this_epoch,
+                                             pseudo_labeled_samples, 0, model, attack_threshold=attack_threshold)
                 
                 random_new_additional_samples_needed = additional_samples_needed - remaining_new_samples.size(0)
                 
                 additional_indices = torch.randperm(len(x_test_this_epoch))[:random_new_additional_samples_needed]
                 additional_pseudo_labeled_samples = x_test_this_epoch[additional_indices]
                 if normal_recon_temp == None:
-                    additional_pseudo_labels = evaluate_inputs(model, additional_pseudo_labeled_samples, device)
+                    additional_pseudo_labels = evaluate_inputs(model, additional_pseudo_labeled_samples, device, threshold=classifier_threshold)
                 else:
-                    additional_pseudo_labels = evaluate(normal_recon_temp, x_train_this_epoch, y_train_this_epoch, additional_pseudo_labeled_samples, 0, model)
+                    additional_pseudo_labels = evaluate(normal_recon_temp, x_train_this_epoch, y_train_this_epoch,
+                                                        additional_pseudo_labeled_samples, 0, model,
+                                                        attack_threshold=attack_threshold)
                 
                 pseudo_labeled_samples = torch.cat([pseudo_labeled_samples, additional_pseudo_labeled_samples], dim=0)
                 if normal_recon_temp == None:
@@ -531,9 +747,10 @@ def select_and_update_representative_samples_when_drift(
             additional_indices = torch.randperm(len(x_test_this_epoch))[:additional_samples_needed]
             pseudo_labeled_samples = x_test_this_epoch[additional_indices]
             if normal_recon_temp == None:
-                pseudo_labels = evaluate_inputs(model, pseudo_labeled_samples, device)
+                pseudo_labels = evaluate_inputs(model, pseudo_labeled_samples, device, threshold=classifier_threshold)
             else:
-                pseudo_labels = evaluate(normal_recon_temp, x_train_this_epoch, y_train_this_epoch, pseudo_labeled_samples, 0, model)
+                pseudo_labels = evaluate(normal_recon_temp, x_train_this_epoch, y_train_this_epoch,
+                                         pseudo_labeled_samples, 0, model, attack_threshold=attack_threshold)
 
         # Phase2-D: 完全移除伪标签置信度过滤（原 P0 Fix 2b）
         # SSF 从不过滤伪标签，直接全部入 buffer → buffer 始终满容量
@@ -559,9 +776,10 @@ def load_data(data_path):
     return data
 
 class SplitData(BaseEstimator, TransformerMixin):
-    def __init__(self, dataset):
+    def __init__(self, dataset, pre_scaled=False):
         super(SplitData, self).__init__()
         self.dataset = dataset
+        self.pre_scaled = pre_scaled
 
     def fit(self, X, y=None):
         return self 
@@ -587,6 +805,10 @@ class SplitData(BaseEstimator, TransformerMixin):
 
         else:
             raise ValueError("Unsupported dataset type")
+
+        if self.pre_scaled:
+            x_ = X_.to_numpy(dtype='float32')
+            return x_, y_
 
         # Normalization
         normalize = MinMaxScaler().fit(X_)
@@ -759,7 +981,8 @@ def process_batch(data, temp, layer_index, model, batch_size=128, device='cuda')
     
     return torch.cat(values)
 
-def evaluate(normal_recon_temp, x_train, y_train, x_test, y_test, model, batch_size=128, device='cuda', get_probs=False):
+def evaluate(normal_recon_temp, x_train, y_train, x_test, y_test, model, batch_size=128, device='cuda',
+             get_probs=False, attack_threshold=0.5):
     model.eval()
     # Define dataset and dataloader
     train_ds = TensorDataset(x_train, y_train)
@@ -826,7 +1049,7 @@ def evaluate(normal_recon_temp, x_train, y_train, x_test, y_test, model, batch_s
 
     pdf3 = gaussian3.log_prob(values_recon_test.clone().detach()).exp()
     pdf4 = gaussian4.log_prob(values_recon_test.clone().detach()).exp()
-    y_test_pred_4 = (pdf4 > pdf3).cpu().numpy().astype("int32")
+    y_test_pred_4 = (attack_posterior(pdf3, pdf4) > attack_threshold).cpu().numpy().astype("int32")
     # y_test_pro_de = (torch.abs(pdf4 - pdf3)).cpu().detach().numpy().astype("float32")
 
     if get_probs:
@@ -906,7 +1129,6 @@ def adaptive_params(severity, base_lwf_lambda=0.5, base_epochs=20):
     """
     # C3: drift 时全局 lwf=0，选择性蒸馏由训练循环中按样本不确定性实现
     lwf_lambda = 0.0
-    # C1: severity 越大 → 分配更多训练 epoch
-    epochs = max(1, int(base_epochs * (1.0 + severity)))
+    # C1: severity 越大 → 分配更多训练 epoch（0.5x 缩放避免低 severity 时过度训练伪标签）
+    epochs = max(1, int(base_epochs * (1.0 + 0.5 * severity)))
     return lwf_lambda, epochs
-
